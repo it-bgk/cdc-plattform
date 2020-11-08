@@ -289,13 +289,12 @@ services:
         networks:
             egress:
             ir_internal:
-        volumes:
-        - ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
+        #volumes:
+        #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
         depends_on:
         - traefik
         - cassandra
         - janusgraph
-        - cortex
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
             - TH_CORTEX_KEY=${TH_CORTEX_KEY}
@@ -317,6 +316,12 @@ services:
         container_name: thehive-janusgraph
         networks: 
             ir_internal:
+        # healthcheck:
+        #     test: ["CMD", "while ! cqlsh -e 'describe cluster' ; do sleep 1; done;"]
+        #     interval: 30s
+        #     timeout: 30s
+        #     retries: 3
+        #     start_period: 60s
     cassandra:
         image: cassandra:latest
         restart: unless-stopped
@@ -325,6 +330,12 @@ services:
             - cassandra_data:/var/lib/cassandra
         networks: 
             ir_internal:
+        healthcheck:
+            test: ["CMD", "cqlsh -e 'describe cluster'|| exit 1"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+            start_period: 60s
     # misp-internal:
     #     image: misp
     #     restart: unless-stopped
