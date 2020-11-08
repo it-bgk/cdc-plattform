@@ -5,7 +5,8 @@ All the tools I use are free to use and can be used without any dependencies of 
 The goal of the project is to make the installation and maintenance easier to setup and use the tools listed in [contribution](#contribution).
 
 
-[![pipeline status](https://gitlab.com/it-bgk/docker/cdc-plattform/badges/master/pipeline.svg)](https://gitlab.com/it-bgk/docker/cdc-plattform/-/commits/master)
+[![Gitlab pipeline status](https://gitlab.com/it-bgk/docker/cdc-plattform/badges/master/pipeline.svg)](https://gitlab.com/it-bgk/docker/cdc-plattform/-/commits/master)
+![GitHub License](https://img.shields.io/github/license/it-bgk/cdc-plattform?style=flat-square)
 
 <!-- ToC start -->
 # Table of Contents
