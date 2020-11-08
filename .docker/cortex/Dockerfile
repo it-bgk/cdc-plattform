@@ -49,6 +49,6 @@ COPY s6/cortex/prepare /etc/cont-init.d/00-cortex-prepare
 COPY s6/cortex/run /etc/services.d/cortex/run
 
 ENTRYPOINT ["/init"]
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD [ "curl --fail http://127.0.0.1:9001" ] || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD curl --fail http://127.0.0.1:9001 || exit 1
 
 ENV job_directory="/tmp/cortex-jobs"

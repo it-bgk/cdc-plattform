@@ -32,4 +32,4 @@ COPY s6/thehive/prepare /etc/cont-init.d/00-thehive-prepare
 COPY s6/thehive/run /etc/services.d/thehive/run
 
 ENTRYPOINT ["/init"]
-HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD [ "curl --fail http://127.0.0.1:9000" ] || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD curl --fail http://127.0.0.1:9000 || exit 1
