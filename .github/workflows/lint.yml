@@ -7,9 +7,14 @@ jobs:
     steps: 
     - name: Checkout
       uses: actions/checkout@master
-    - name: lint
-      uses: luke142367/Docker-Lint-Action@v1.0.0
-      with:
-        target: .docker/cortex/Dockerfile .docker/thehive4/Dockerfile
+    # - name: lint
+    #   uses: luke142367/Docker-Lint-Action@v1.0.0
+    #   with:
+    #     target: .docker/cortex/Dockerfile .docker/thehive4/Dockerfile
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Docker lint check
+      uses: uditgaurav/docker-linter@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DOCKERFILE: .docker/cortex/Dockerfile .docker/thehive4/Dockerfile
