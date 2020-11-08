@@ -1,0 +1,59 @@
+version: "3"
+networks:
+    ir_internal:
+        external: true
+
+services:
+    grakn:
+        ports: 
+        - 127.0.0.1:50000:48555
+    elsticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.2
+        environment: 
+            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+            - "http.host=0.0.0.0"
+            - "discovery.type=single-node"
+            - "transport.host=0.0.0.0"
+            #- "xpack.security.enabled=false"
+            - script.allowed_types=inline
+            - thread_pool.search.queue_size=100000
+            - thread_pool.write.queue_size=10000
+            - path.repo=backup
+        networks: 
+            ir_internal:
+    opencti:
+        image: opencti/platform:rolling
+        environment: 
+            - APP__BASE_PATH=${OPENCTI_BASE_PATH}
+        networks: 
+            ir_internal:
+        ports:
+            - 127.0.0.1:50000:8080
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.opencti.rule=Host(`opencti.${FQDN}`)"
+            #- "traefik.http.routers.opencti.rule=PathPrefix(`${OPENCTI_BASE_PATH}`)"
+            - "traefik.http.services.opencti.loadbalancer.server.port=8080"
+    connector-export-file-stix:
+        image: opencti/connector-export-file-stix:rolling
+    connector-export-file-csv:
+        image: opencti/connector-export-file-csv:rolling
+    connector-import-file-stix:
+        image: opencti/connector-import-file-stix:rolling
+    connector-import-file-pdf-observables:
+        image: opencti/connector-import-file-pdf-observables:rolling
+    connector-opencti:
+        image: opencti/connector-opencti:rolling
+    connector-history:
+        image: opencti/connector-history:rolling
+    worker:
+        image: opencti/worker:rolling
+    redis:
+        image: redis
+    minio:
+        image: minio/minio
+        ports:
+            - 127.0.0.1:9000:9000
+    rabbitmq:
+        image: rabbitmq:management
