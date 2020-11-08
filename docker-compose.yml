@@ -1,0 +1,399 @@
+version: '2.4'
+
+volumes:
+    cert_data:
+        name: cert_data
+    es_data:
+        name: es_data
+    es_config:
+        name: es_config
+    acme_data:
+        name: acme_data
+    misp_redis:
+        name: misp_redis
+    cassandra_data:
+        name: cassandra_data
+    minemeld_local:
+        name: minemeld_local
+    minemeld_logs:
+        name: minemeld_logs
+
+networks:
+    egress:
+        name: egress
+        ipam:
+            driver: default
+            config:
+                - subnet: "${EGRESS_IP_SUBNET}.0/27"
+        driver_opts:
+            com.docker.network.bridge.name: docker-egress
+    ir_internal:
+        name: ir_internal
+        internal: true
+        ipam:
+            driver: default
+            config:
+                - subnet: "${INTERNAL_IP_SUBNET}.0/27"
+        driver_opts:
+            com.docker.network.bridge.name: docker-ir
+
+services:
+    # https://containrrr.github.io/watchtower/  
+    watchtower:
+        image: containrrr/watchtower
+        container_name: watchtower
+        restart: unless-stopped
+        environment: 
+        - WATCHTOWER_CLEANUP=true
+        - WATCHTOWER_POLL_INTERVAL=300
+        - WATCHTOWER_MONITOR_ONLY=false
+        - WATCHTOWER_SCHEDULE=0 0 4 * * *
+        - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
+        #
+        - WATCHTOWER_NOTIFICATIONS=email
+            # in seconds:
+        - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+            # to skip cert verify
+        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
+        - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+        - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+        networks:
+            egress:
+        volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        runtime: runc
+        mem_limit: 512M
+    # https://docs.traefik.io/   
+    traefik:
+        image: traefik:latest
+        restart: unless-stopped
+        container_name: traefik
+        volumes:
+        - acme_data:/etc/traefik/acme
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        environment: 
+            # Entrypoint HTTP
+            ## Enable entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTP=true
+            ## Set entrypoint to the following port
+            - TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS=:80
+            ## Set forwardheaders
+            - TRAEFIK_ENTRYPOINTS_HTTP_FORWARDEDHEADERS_INSECURE=true
+            # Entrypoint HTTPS
+            ## Enable entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTPS=true
+            ## Set entrypoint to the following port
+            - TRAEFIK_ENTRYPOINTS_HTTPS_ADDRESS=:443
+            ## Set forwardheaders
+            - TRAEFIK_ENTRYPOINTS_HTTPS_FORWARDEDHEADERS_INSECURE=true
+            ## Set TLS on this entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTPS_HTTP_TLS=true
+            # Ping function
+            ## Enable Ping
+            - TRAEFIK_PING=false
+            ## Set /ping is available for http and https
+            #TRAEFIK_PING_ENTRYPOINT=http https
+            # Dashboard
+            - TRAEFIK_API=true
+            - TRAEFIK_API_DASHBOARD=true
+            # Provider
+            ## Enable Docker provider
+            - TRAEFIK_PROVIDERS_DOCKER=true
+            ## Set docker provider endpoint
+            - TRAEFIK_PROVIDERS_DOCKER_ENDPOINT=unix:///var/run/docker.sock
+            ## Disable docker container default exposion
+            - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
+            ## Set docker network for watching container
+            - TRAEFIK_PROVIDERS_DOCKER_NETWORK=ir_internal
+            # Logging
+            - TRAEFIK_LOG=true
+            - TRAEFIK_LOG_LEVEL=debug
+            - TRAEFIK_ACCESSLOG=true
+            # Disable SSL certificate verification. (Default: false)
+            - TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY=true
+        networks:
+            egress:
+            ir_internal:
+        ports:
+        - 80:80
+        - 443:443
+        mem_limit: 1G
+        labels:
+        - "traefik.enable=true"
+        ### SSL
+        #- "traefik.http.routers.traefik.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+        - "traefik.http.routers.traefik.rule=Host(`traefik.${FQDN}`)"
+        - "traefik.http.routers.traefik.service=api@internal"
+    # traefik-certs-dumper:
+        #     image: ldez/traefik-certs-dumper
+        #     restart: unless-stopped
+        #     container_name: traefik-certs-dumper
+        #     volumes:
+        #     -  acme_data:/acme:ro
+        #     -  cert_data:/cert
+        #     network_mode: "none"
+        #     mem_limit: 256M
+        #     command: 
+        #         file --watch --domain-subdir
+        #         --crt-name=fullchain
+        #         --key-name=privkey
+        #         --version=v2
+        #         --source /acme/acme.json
+        #         --dest /cert > /dev/stdout
+    # https://www.elastic.co/guide/en/elasticsearch/reference/6.x/docker.html
+    elasticsearch:
+        image: itbgk/elasticsearch-oss:7.9.2
+        restart: unless-stopped
+        container_name: elasticsearch
+        networks:
+            ir_internal:
+        environment: 
+        - node.name=elasticsearch
+        - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+        - "http.host=0.0.0.0"
+        - "discovery.type=single-node"
+        - "transport.host=0.0.0.0"
+        #- "xpack.security.enabled=false"
+        - script.allowed_types=inline
+        - thread_pool.search.queue_size=100000
+        - thread_pool.write.queue_size=10000
+        - path.repo=backup
+        - cluster.name=hive
+        # - opendistro_security.ssl.http.enabled=false  
+        expose:
+            - 9200 # HTTP
+        volumes:
+            - es_data:/usr/share/elasticsearch/data
+            - es_config:/usr/share/elasticsearch/config
+            #- ./DATA/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+            nofile:
+                soft: 65536
+                hard: 65536
+        mem_limit: 6G
+    # kibana:
+        #     image: amazon/opendistro-for-elasticsearch-kibana:latest
+        #     container_name: kibana
+        #     # ports:
+        #     #     - 5601:5601
+        #     depends_on: 
+        #         - es-01
+        #     expose:
+        #         - "5601"
+        #     # environment:
+        #     #     - ELASTICSEARCH_URL=https://es-01:9200
+        #     #     - ELASTICSEARCH_HOSTS=https://es-01:9200
+        #         # - opendistro_security.ssl.http.enabled=false  
+        #     networks:
+        #         - ir_internal
+        #     volumes:
+        #         - es_config:/es_config:ro
+        #         - ./DATA/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+        #     runtime: runc
+        #     labels:
+        #         - "traefik.enable=true"
+        #         - "traefik.http.routers.kibana.rule=PathPrefix(`/kibana`)" #||PathPrefix(`/app/kibana`)||PathPrefix(`/login`)||PathPrefix(`/bundles`)"
+        #         - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+    cerebro:
+        image: lmenezes/cerebro
+        restart: unless-stopped
+        container_name: cerebro
+        volumes:
+            - "./DATA/cerebro/application.conf:/opt/cerebro/conf/application.conf"
+        environment: 
+            - SECRET_KEY=${CEREBRO_SECRET}
+            - BASE_PATH=${CEREBRO_BASE_PATH}
+            - ES_URL=${CEREBRO_ES_URL}
+            - ES_AUTH_USER=${CEREBRO_ES_AUTH_USER}
+            - ES_AUTH_PW=${CEREBRO_ES_AUTH_PW}
+            - AUTH_TYPE=${CEREBRO_AUTH_TYPE}
+            - BASIC_AUTH_USER=${CEREBRO_BASIC_AUTH_USER}
+            - BASIC_AUTH_PWD=${CEREBRO_BASIC_AUTH_PW}
+            - LDAP_URL=${CEREBRO_LDAP_URL}
+            - LDAP_BASE_DN=${CEREBRO_LDAP_BASE_DN}
+            # Usually method should  be "simple" otherwise, set it to the SASL mechanisms
+            - LDAP_METHOD=simple
+            - LDAP_USER_TEMPLATE=${CEREBRO_LDAP_USER_TEMPLATE}
+            - LDAP_BIND_DN=${CEREBRO_LDAP_BIND_DN}
+            - LDAP_BIND_PWD=${CEREBRO_LDAP_BIND_PW}
+            - LDAP_GROUP_BASE_DN=${CEREBRO_LDAP_GROUP_BASE_DN}
+            - LDAP_USER_ATTR=${CEREBRO_LDAP_USER_ATTR}
+            - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
+            - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
+        networks:
+            ir_internal:
+        depends_on: 
+        - elasticsearch
+        - traefik
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
+            - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
+    cortex:
+        image: itbgk/cortex:latest
+        build:
+            context: .docker/cortex/
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        container_name: cortex
+        volumes:
+            #- ./DATA/cortex/application.conf:/etc/cortex/application.conf
+            - /var/run/docker.sock:/var/run/docker.sock:ro # https://github.com/TheHive-Project/Cortex/issues/260#issuecomment-673292919
+            - es_config:/es_config:ro
+            - ./DATA/cortex/nslr:/opt/cortex/analyzer_files/nslr:ro
+        environment: 
+            - SECRET=${CORTEX_SECRET}
+            - AUTH=${CORTEX_AUTH}
+            - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
+            - AUTH_AD_SERVERNAMES=${CORTEX_AUTH_AD_SERVERNAMES}
+            - ES_URI=${CORTEX_ES_URL}
+            - ES_AUTH_USER=${CORTEX_ES_AUTH_USER}
+            - ES_AUTH_PW=${CORTEX_ES_AUTH_PW}
+            - CONFIG_FILE=${CORTEX_CONFIG_FILE}
+            - DOCKER_HOST=${CORTEX_DOCKER_HOST}
+            # - JAVA_OPTS=-Djavax.net.ssl.trustStore=/etc/thehive/truststore/truststore.jks
+            #- DOCKER_GID=999 # Set the correct local docker group GID
+            #- job_directory=/tmp/cortex-jobs
+        networks:
+            egress:
+            ir_internal:
+        depends_on:
+        - elasticsearch
+        - traefik
+        expose:
+            - 9001
+        runtime: runc
+        mem_limit: 8G
+        labels:
+            - "traefik.enable=true"
+            ### SSL
+            - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
+            - "traefik.http.services.cortex.loadbalancer.server.port=9001"
+            # - "traefik.http.middlewares.cortexstrip.stripprefix.prefixes=/cortex"
+            # - "traefik.http.routers.cortex.middlewares=cortexstrip"
+    thehive:
+        #image: thehiveproject/thehive:latest
+        image: itbgk/thehive4:latest
+        build: 
+            context: .docker/thehive4
+        restart: unless-stopped
+        container_name: thehive
+        networks:
+            egress:
+            ir_internal:
+        volumes:
+        - ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
+        depends_on:
+        - traefik
+        - cassandra
+        - janusgraph
+        - cortex
+        environment: 
+            # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
+            - TH_CORTEX_KEY=${TH_CORTEX_KEY}
+            - TH_CORTEX_URL=${TH_CORTEX_URL}
+            #- TH_CORTEX_PORT=9001
+            - TH_ES_HOSTNAME=${TH_ES_HOSTNAME}
+            - TH_MISP_URL=${TH_MISP_URL}
+            - TH_MISP_KEY=${TH_MISP_KEY}
+            - TH_MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
+        expose:
+            - 9000
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`)"
+            - "traefik.http.services.thehive.loadbalancer.server.port=9000"
+    janusgraph:
+        image: janusgraph/janusgraph:latest
+        restart: unless-stopped
+        container_name: thehive-janusgraph
+        networks: 
+            ir_internal:
+    cassandra:
+        image: cassandra:latest
+        restart: unless-stopped
+        container_name: thehive-cassandra
+        volumes: 
+            - cassandra_data:/var/lib/cassandra
+        networks: 
+            ir_internal:
+    # misp-internal:
+    #     image: misp
+    #     restart: unless-stopped
+    #     container_name: misp-internal
+    #     networks:
+    #         traefik_internal:
+    #     volumes:
+    #         misp_data:/var/www/MISP
+    #     env_file: env/misp.env
+    #     labels:
+    #         - "traefik.enable=true"
+    #         ### SSL
+    #         - "traefik.http.routers.thehive.rule=Host(`${FQDN}`) && PathPrefix(`/misp`))"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    # misp-public:
+    #     image: misp
+    #     restart: unless-stopped
+    #     container_name: misp-public
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_public_data:/var/www/MISP
+    #     env_file: env/misp.env
+    #     labels:
+    #         - "traefik.enable=true"
+    #         ### SSL
+    #         - "traefik.http.routers.thehive.rule=Host(`${FQDN}`) && PathPrefix(`/misp-public`))"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    misp-modules:
+        image: itbgk/misp-modules
+        build:
+            context: https://github.com/MISP/misp-modules.git
+            dockerfile: docker/Dockerfile
+        restart: unless-stopped
+        container_name: misp-modules
+        networks:
+            egress:
+        expose:
+            - 6666
+        #env_file: env/misp-modules.env
+    misp-redis:
+        image: redis
+        restart: unless-stopped
+        container_name: misp-redis
+        networks:
+            ir_internal:
+        volumes:
+            - misp_redis:/data
+        command: redis-server --appendonly yes
+    ###
+    minemeld:
+        image: paloaltonetworks/minemeld
+        container_name: minemeld
+        restart: unless-stopped
+        tmpfs: /run
+        volumes: 
+            - minemeld_local:/opt/minemeld/local
+            - minemeld_logs:/opt/minemeld/log 
+        networks:
+            egress:
+            ir_internal:
+        depends_on: 
+        - traefik
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.minemeld.rule=Host(`minemeld.${FQDN}`)"
+            - "traefik.http.services.minemeld.loadbalancer.server.port=443"
+            - "traefik.http.services.minemeld.loadbalancer.server.scheme=https"
+    ###
