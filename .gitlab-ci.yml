@@ -1,0 +1,87 @@
+# General Options
+image: docker:git
+services:
+  - docker:dind
+include:
+  # https://docs.gitlab.com/ee/user/application_security/container_scanning/
+  - template: Container-Scanning.gitlab-ci.yml
+  # https://docs.gitlab.com/ee/user/application_security/secret_detection/
+  - template: Secret-Detection.gitlab-ci.yml
+stages:
+  - build
+  - test
+  - release
+variables:
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  RELEASE_CI_REGISTRY: ""
+  #
+  #DOCKER_USERNAME
+  #DOCKER_PASSWORD
+  #
+  #CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  #CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  CORTEX_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  CORTEX_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  THEHIVE_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  # For Container Scanning
+  CLAIR_OUTPUT: High
+before_script:
+  # Login to Gitlab Docker Registry
+  - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+  # Login to hub.docker.com Registry
+  - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  # Save Version to file (will be read by api.py)
+  - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
+
+retag-elasticsearch:
+stage: build
+  script:
+    - ES_IMAGE_VERSION=$(cat docker-compose.yml |grep "image: .*elasticsearch-oss.*"|cut -d : -f 3)
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_IMAGE_VERSION}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_IMAGE_VERSION} itbgk/elasticsearch-oss:${ES_IMAGE_VERSION}
+    - docker push itbgk/elasticsearch-oss:${ES_IMAGE_VERSION}
+
+build-test-cortex:
+  stage: build
+  script:
+    - docker build --pull -t $CORTEX_CONTAINER_TEST_IMAGE .
+    - docker push $CORTEX_CONTAINER_TEST_IMAGE
+  except:
+    - master
+
+build-test-thehive:
+  stage: build
+  script:
+    - docker build --pull -t $THEHIVE_CONTAINER_TEST_IMAGE .
+    - docker push $THEHIVE_CONTAINER_TEST_IMAGE
+  except:
+    - master
+
+# test:
+#   stage: test
+#   script:
+#     - docker pull $CONTAINER_TEST_IMAGE
+#     - docker run $CONTAINER_TEST_IMAGE /script/to/run/another/test
+#   except:
+#     - master
+
+# build-release-cortex:
+#   stage: release
+#   script:
+#     - docker pull $CORTEX_CONTAINER_TEST_IMAGE
+#     - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE
+#     - docker push $CORTEX_CONTAINER_RELEASE_IMAGE
+#   only:
+#     - master
+
+# build-release-thehive:
+#   stage: release
+#   script:
+#     - docker pull $THEHIVE_CONTAINER_TEST_IMAGE
+#     - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE
+#     - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE
+#   only:
+#     - master
