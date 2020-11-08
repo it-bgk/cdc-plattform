@@ -1,0 +1,19 @@
+name: Sync / Retag Workflow
+on:
+  schedule:
+    - cron:  '0 0 * * *'
+jobs:
+  run:
+    name: Sync / Retag Job
+    runs-on: ubuntu-latest
+    steps:
+    - name: Sync from docker.elastic.co to hub.docker.com
+      uses: onichandame/docker-registry-sync-action@master
+      with:
+        TAG: 7.9.2
+        source_repository: docker.elastic.co/elasticsearch/elasticsearch-oss:$TAG
+        #source_username: ${{ secrets.DOCKER_USERNAME }}
+        #source_password: ${{ secrets.DOCKER_PASSWORD }}
+        target_repository: docker.io/itbgk/elasticsearch-oss:$TAG
+        target_username: ${{ secrets.DOCKER_USERNAME }}
+        target_password: ${{ secrets.DOCKER_PASSWORD }}

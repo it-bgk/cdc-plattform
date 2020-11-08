@@ -1,0 +1,20 @@
+name: Make Security Checks
+on:
+  pull_request:
+    paths: 
+      - '.docker/**'
+jobs:
+  run:
+    #name: Run
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Sysdig CIS Dockerfile Benchmark Cortex
+      uses: sysdiglabs/benchmark-dockerfile@v1.0.0
+      with:
+        directory: .docker/cortex
+    - name: Sysdig CIS Dockerfile Benchmark TheHive4
+      uses: sysdiglabs/benchmark-dockerfile@v1.0.0
+      with:
+        directory: .docker/thehive4
