@@ -1,0 +1,7 @@
+/etc/thehive true root:thehive 0600 0700
+${DATA_PATH} true thehive:thehive 0600 0700
+/etc/thehive/application.conf false root:thehive 0640 0700
+
+
+#chgrp thehive /etc/thehive/application.conf
+#chmod 640 /etc/thehive/application.conf

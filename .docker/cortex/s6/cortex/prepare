@@ -1,0 +1,96 @@
+#!/usr/bin/with-contenv sh
+
+USERNAME=${USERNAME:-"cortex"}
+[ -z "$GID" ] && GID=1000
+[ -z "$UID" ] && UID=1000
+[ -z "$OWN_CONFIG" ] && OWN_CONFIG=""
+
+export DOCKER_GID=${DOCKER_GID:-"999"} # Set the correct local docker group GID
+
+#CONFIG_SECRET=${CONFIG_SECRET:-"1"}
+#CONFIG_ES=${CONFIG_ES:-"1"}
+export CONFIG=${CONFIG:-"1"}
+
+# ANALYZER_PATH=${ANALYZER_PATH:-"/etc/cortex/analyzers.json"}
+# ANALYZER_URLS=${ANALYZER_URLS:-"()"}
+# RESPONDER_PATH=${RESPONDER_PATH:-"/etc/cortex/responders.json"}
+# RESPONDER_URLS=${RESPONDER_URLS:-"()"}
+# START_DOCKER=${START_DOCKER:-"0"}
+# SHOW_SECRET=${SHOW_SECRET:-"0"}
+
+
+# Check user id
+if [ -n "$(id "$USERNAME" > /dev/null)" ]
+then
+    usermod -u "${UID}" "$USERNAME"
+    groupmod -g "${GID}" "$USERNAME"
+fi
+
+mkdir -p /var/log/cortex
+chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex
+chgrp "$USERNAME" "$CONFIG_FILE"
+chmod 640 "$CONFIG_FILE"
+
+# Docker settings
+if [ "$(id "$USERNAME" -u)" != 999 ]
+then
+	# Add docker group
+	addgroup docker --gid "$DOCKER_GID"
+	# Add group to current user
+	usermod -a -G docker "$USERNAME"
+fi
+
+# if [ "$CONFIG" == 1 ]
+# then
+# # [ -z $(grep "play.http.secret.key" "$CONFIG_FILE") ] && echo "play.http.secret.key=\"$SECRET\"" >> "$CONFIG_FILE"
+# # [ -z $(grep "play.http.secret.key" "$CONFIG_FILE") ] && echo "play.http.secret.key=\"$SECRET\"" >> "$CONFIG_FILE"
+# 	#################
+#     if test $CONFIG_ES = 1
+# 	then
+# 		if test -z "$ES_URI"
+# 		then
+# 			function join_es_hosts {
+# 				echo -n "$1:9200"
+# 				shift
+# 				printf "%s," "${@/#/:9200}"
+# 			}
+
+# 			ES=$(getent ahostsv4 "$ES_HOSTNAME" | awk '{ print $1 }' | sort -u)
+# 			if test -z "$ES"
+# 			then
+# 				echo "Warning automatic elasticsearch host config fails"
+# 			else
+# 				ES_URI=http://$(join_es_hosts $ES)
+# 			fi
+# 		fi
+# 		if test -n "$ES_URI"
+# 		then
+# 			[ -z $(grep "search.uri" "$CONFIG_FILE") ] && echo "Using elasticsearch uri: $ES_URI"
+# 			[ -z $(grep "search.uri" "$CONFIG_FILE") ] && echo "search.uri=\"$ES_URI\"" >> "$CONFIG_FILE"
+# 			[ -n "$SSL_PASSPHRASE_FILE" ] && sed -i "s,.*#ssl_password_file.*,ssl_password_file ${SSL_PASSPHRASE_FILE};," "$CONFIG_FILE"
+# 		else
+# 			echo elasticsearch host not configured
+# 		fi
+# 	fi
+#     #################
+#     function join_urls {
+# 		echo -n \"$1\"
+# 		shift
+# 		for U do echo -n ,\"$U\"; done
+# 		printf ",\"%s\"" $@
+# 	}
+# 	test ${#ANALYZER_URLS} = 0 && ANALYZER_URLS+=$ANALYZER_PATH
+# 	test ${#RESPONDER_URLS} = 0 && RESPONDER_URLS+=$RESPONDER_PATH
+	
+# 	[ -z $(grep "analyzer.urls" "$CONFIG_FILE") ] && echo analyzer.urls=\[$(join_urls ${ANALYZER_URLS[@]})\] >> "$CONFIG_FILE"
+# 	[ -z $(grep "responder.urls" "$CONFIG_FILE") ] && echo responder.urls=\[$(join_urls ${RESPONDER_URLS[@]})\] >> "$CONFIG_FILE"
+
+# fi
+
+
+# echo "config file $CONFIG_FILE is:"
+# echo "##################"
+# cat "$CONFIG_FILE"
+# echo "##################"
+
+
