@@ -37,7 +37,7 @@ before_script:
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
 
 retag-elasticsearch:
-stage: build
+  stage: build
   script:
     - ES_IMAGE_VERSION=$(cat docker-compose.yml |grep "image: .*elasticsearch-oss.*"|cut -d : -f 3)
     - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_IMAGE_VERSION}
