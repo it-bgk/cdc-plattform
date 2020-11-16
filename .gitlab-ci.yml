@@ -26,6 +26,7 @@ variables:
   CORTEX_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   THEHIVE_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  ES_IMAGE_VERSION=$$(cat docker-compose.yml |grep "image:.*elasticsearch-oss.*"|cut -d : -f 3)
   # For Container Scanning
   CLAIR_OUTPUT: High
 before_script:
@@ -39,7 +40,6 @@ before_script:
 retag-elasticsearch:
   stage: build
   script:
-    - ES_IMAGE_VERSION=$(cat docker-compose.yml |grep "image: .*elasticsearch-oss.*"|cut -d \: -f 3)
     - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_IMAGE_VERSION}
     - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${ES_IMAGE_VERSION} itbgk/elasticsearch-oss:${ES_IMAGE_VERSION}
     - docker push itbgk/elasticsearch-oss:${ES_IMAGE_VERSION}
