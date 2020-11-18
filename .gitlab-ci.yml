@@ -7,6 +7,10 @@ include:
   - template: Container-Scanning.gitlab-ci.yml
   # https://docs.gitlab.com/ee/user/application_security/secret_detection/
   - template: Secret-Detection.gitlab-ci.yml
+  # Own Template
+  - https://gitlab.com/it-bgk/gitlab-templates/-/raw/master/shellcheck.yml
+  # License Scanning
+  - template: Security/License-Scanning.gitlab-ci.yml
 stages:
   - build
   - test
@@ -26,7 +30,6 @@ variables:
   CORTEX_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   THEHIVE_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
-  ES_IMAGE_VERSION: (cat docker-compose.yml |grep "image:.*elasticsearch-oss.*"|cut -d ":" -f 3)
   # For Container Scanning
   CLAIR_OUTPUT: High
 before_script:
@@ -36,18 +39,23 @@ before_script:
   - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
   # Save Version to file (will be read by api.py)
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
+  - git clone https://gitlab.com/it-bgk/helper-scripts. ${TEMP}/helper_scripts
+  - add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss
 
 retag-elasticsearch:
   stage: build
   script:
-    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${ES_IMAGE_VERSION}
-    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${ES_IMAGE_VERSION} itbgk/elasticsearch-oss:$${ES_IMAGE_VERSION}
-    - docker push itbgk/elasticsearch-oss:$${ES_IMAGE_VERSION}
+    - source .vars
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss} itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
+    - docker push itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
+  # only:
+  #   - master
 
 build-test-cortex:
   stage: build
   script:
-    - docker build --pull -t $CORTEX_CONTAINER_TEST_IMAGE .
+    - docker build --pull -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
     - docker push $CORTEX_CONTAINER_TEST_IMAGE
   except:
     - master
@@ -55,7 +63,7 @@ build-test-cortex:
 build-test-thehive:
   stage: build
   script:
-    - docker build --pull -t $THEHIVE_CONTAINER_TEST_IMAGE .
+    - docker build --pull -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
     - docker push $THEHIVE_CONTAINER_TEST_IMAGE
   except:
     - master
