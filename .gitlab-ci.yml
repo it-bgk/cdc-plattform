@@ -1,7 +1,9 @@
-# General Options
+---
 image: docker:git
+
 services:
   - docker:dind
+
 include:
   # https://docs.gitlab.com/ee/user/application_security/container_scanning/
   - template: Container-Scanning.gitlab-ci.yml
@@ -11,10 +13,12 @@ include:
   - https://gitlab.com/it-bgk/gitlab-templates/-/raw/master/shellcheck.yml
   # License Scanning
   - template: Security/License-Scanning.gitlab-ci.yml
+
 stages:
   - build
   - test
   - release
+
 variables:
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
   DOCKER_HOST: tcp://docker:2376
@@ -30,8 +34,11 @@ variables:
   CORTEX_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   THEHIVE_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  MISP_MODULES_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  MISP_MODULES_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   # For Container Scanning
   CLAIR_OUTPUT: High
+
 before_script:
   # Login to Gitlab Docker Registry
   - echo "$CI_JOB_TOKEN" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -42,15 +49,15 @@ before_script:
   - git clone https://gitlab.com/it-bgk/helper-scripts. ${TEMP}/helper_scripts
   - add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss
 
-retag-elasticsearch:
+build-test-misp-modules:
   stage: build
   script:
-    - source .vars
-    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss}
-    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss} itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
-    - docker push itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
-  # only:
-  #   - master
+    - git clone https://github.com/MISP/misp-modules.git
+    - cd misp-modules
+    - docker build --pull -t $MISP_MODULES_CONTAINER_TEST_IMAGE docker/
+    - docker push $MISP_MODULES_CONTAINER_TEST_IMAGE
+  except:
+    - master
 
 build-test-cortex:
   stage: build
@@ -93,3 +100,13 @@ build-test-thehive:
 #     - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE
 #   only:
 #     - master
+
+retag-elasticsearch:
+  stage: build
+  script:
+    - source .vars
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss} itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
+    - docker push itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
+  # only:
+  #   - master
