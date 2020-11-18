@@ -46,6 +46,7 @@ before_script:
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
   - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
   - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG_ES
+  - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
 
 container_scanning:
   before_script:
