@@ -1,11 +1,10 @@
 name: Make Security Checks
 on:
   pull_request:
-    paths: 
-      - '.docker/**'
+    # paths: 
+    #   - '.docker/**'
 jobs:
   run:
-    #name: Run
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
