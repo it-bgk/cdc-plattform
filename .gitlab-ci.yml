@@ -61,6 +61,7 @@ secret_detection_default_branch :
   before_script:
    - echo ""
 
+###############
 
 build-test-misp-modules:
   stage: build
@@ -69,24 +70,24 @@ build-test-misp-modules:
     - cd misp-modules
     - docker build --pull -t $MISP_MODULES_CONTAINER_TEST_IMAGE docker/
     - docker push $MISP_MODULES_CONTAINER_TEST_IMAGE
-  except:
-    - master
+  # except:
+  #   - master
 
 build-test-cortex:
   stage: build
   script:
     - docker build --pull -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
     - docker push $CORTEX_CONTAINER_TEST_IMAGE
-  except:
-    - master
+  # except:
+  #   - master
 
 build-test-thehive:
   stage: build
   script:
     - docker build --pull -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
     - docker push $THEHIVE_CONTAINER_TEST_IMAGE
-  except:
-    - master
+  # except:
+  #   - master
 
 # test:
 #   stage: test
