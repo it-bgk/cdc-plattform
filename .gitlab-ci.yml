@@ -42,8 +42,6 @@ variables:
 before_script:
   # Login to Gitlab Docker Registry
   - echo "$CI_JOB_TOKEN" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  # Login to hub.docker.com Registry
-  - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
   # Save Version to file (will be read by api.py)
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
   - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
@@ -97,28 +95,31 @@ build-test-thehive:
 #   except:
 #     - master
 
-# build-release-cortex:
-#   stage: release
-#   script:
-#     - docker pull $CORTEX_CONTAINER_TEST_IMAGE
-#     - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE
-#     - docker push $CORTEX_CONTAINER_RELEASE_IMAGE
-#   only:
-#     - master
+build-release-cortex:
+  stage: release
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
+    - docker pull $CORTEX_CONTAINER_TEST_IMAGE
+    - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE
+    - docker push $CORTEX_CONTAINER_RELEASE_IMAGE
+  only:
+    - master
 
-# build-release-thehive:
-#   stage: release
-#   script:
-#     - docker pull $THEHIVE_CONTAINER_TEST_IMAGE
-#     - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE
-#     - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE
-#   only:
-#     - master
+build-release-thehive:
+  stage: release
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
+    - docker pull $THEHIVE_CONTAINER_TEST_IMAGE
+    - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE
+    - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE
+  only:
+    - master
 
-retag-elasticsearch:
+retag-release-elasticsearch:
   stage: release
   script:
     - source .vars
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
     - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES}
     - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES} itbgk/elasticsearch-oss:${TAG_ES}
     - docker push itbgk/elasticsearch-oss:${TAG_ES}
