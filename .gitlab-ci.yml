@@ -46,8 +46,8 @@ before_script:
   - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
   # Save Version to file (will be read by api.py)
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
-  - git clone https://gitlab.com/it-bgk/helper-scripts.git ${TEMP}/helper_scripts
-  - add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss
+  - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
+  - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss
 
 build-test-misp-modules:
   stage: build
