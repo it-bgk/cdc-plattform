@@ -105,8 +105,8 @@ retag-elasticsearch:
   stage: build
   script:
     - source .vars
-    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${TAG_ES}
-    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${TAG_ES} itbgk/elasticsearch-oss:$${TAG_ES}
-    - docker push itbgk/elasticsearch-oss:$${TAG_ES}
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES} itbgk/elasticsearch-oss:${TAG_ES}
+    - docker push itbgk/elasticsearch-oss:${TAG_ES}
   # only:
   #   - master
