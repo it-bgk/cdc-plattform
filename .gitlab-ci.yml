@@ -52,7 +52,7 @@ before_script:
 container_scanning:
   before_script:
    - echo ""
-   
+
 license_scanning:
   before_script:
    - echo ""
@@ -115,11 +115,11 @@ build-test-thehive:
 #     - master
 
 retag-elasticsearch:
-  stage: build
+  stage: release
   script:
     - source .vars
     - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES}
     - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES} itbgk/elasticsearch-oss:${TAG_ES}
     - docker push itbgk/elasticsearch-oss:${TAG_ES}
-  # only:
-  #   - master
+  only:
+    - master
