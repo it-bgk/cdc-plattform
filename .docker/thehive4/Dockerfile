@@ -1,6 +1,7 @@
 FROM debian:stable-slim
 ARG VERSION=4.0.0-1
 ENV VERSION ${VERSION}
+ENV CONFIG_FILE=/etc/thehive/application.conf
 ENV DATA_PATH=/opt/thp_data/files/thehive
 WORKDIR ${DATA_PATH}
 

@@ -1,4 +1,6 @@
 FROM debian:stable-slim as builder
+ARG VERSION=3.1.0-1
+ENV VERSION ${VERSION}
 ENV CONFIG_FILE=/etc/cortex/application.conf
 ENV DATA_PATH=/opt/cortex
 WORKDIR ${DATA_PATH}

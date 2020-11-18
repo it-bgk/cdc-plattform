@@ -241,7 +241,9 @@ services:
         image: itbgk/cortex:latest
         build:
             context: .docker/cortex/
-            dockerfile: Dockerfile
+            #dockerfile: Dockerfile
+            args:
+                VERSION: 3.1.0-1
         restart: unless-stopped
         container_name: cortex
         volumes:
@@ -284,6 +286,8 @@ services:
         image: itbgk/thehive4:latest
         build: 
             context: .docker/thehive4
+            args:
+                VERSION: 4.0.1-1
         restart: unless-stopped
         container_name: thehive
         networks:
