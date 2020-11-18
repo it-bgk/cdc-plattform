@@ -49,6 +49,19 @@ before_script:
   - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
   - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG_ES
 
+container_scanning:
+  before_script:
+   - echo ""
+   
+license_scanning:
+  before_script:
+   - echo ""
+
+secret_detection_default_branch :
+  before_script:
+   - echo ""
+
+
 build-test-misp-modules:
   stage: build
   script:
