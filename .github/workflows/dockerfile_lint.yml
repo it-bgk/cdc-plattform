@@ -1,5 +1,5 @@
 # https://github.com/marketplace/actions/docker-lint
-name: Lint
+name: Dockerfile Lint
 on: [push]
 jobs:
   lint:

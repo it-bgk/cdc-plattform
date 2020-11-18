@@ -1,4 +1,4 @@
-name: Make Security Checks
+name: Sysdig CIS Benchmarks
 on:
   pull_request:
     # paths: 
