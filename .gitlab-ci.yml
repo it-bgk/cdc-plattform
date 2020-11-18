@@ -47,7 +47,7 @@ before_script:
   # Save Version to file (will be read by api.py)
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
   - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
-  - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss
+  - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG_ES
 
 build-test-misp-modules:
   stage: build
@@ -105,8 +105,8 @@ retag-elasticsearch:
   stage: build
   script:
     - source .vars
-    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss}
-    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${tag_elasticsearch-oss} itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
-    - docker push itbgk/elasticsearch-oss:$${tag_elasticsearch-oss}
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:$${TAG_ES}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:$${TAG_ES} itbgk/elasticsearch-oss:$${TAG_ES}
+    - docker push itbgk/elasticsearch-oss:$${TAG_ES}
   # only:
   #   - master
