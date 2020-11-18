@@ -62,12 +62,13 @@ done
 if test $CONFIG = 1
 then
 	#CONFIG_FILE=$(mktemp).conf
-	echo "# Runtime generated configuration at ${date}" > "$CONFIG_FILE"
+	echo "# Runtime generated configuration at $(date)" > "$CONFIG_FILE"
 
 	if test $CONFIG_SECRET = 1
 	then
 		if test -z "$SECRET"
 		then
+			#shellcheck disable=SC2002
 			SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 			test $SHOW_SECRET = 1 && echo "Using secret: $SECRET"
 		fi
@@ -89,7 +90,7 @@ then
 			then
 				echo "Warning automatic elasticsearch host config fails"
 			else
-				ES_URI=http://$(join_es_hosts $ES)
+				ES_URI=http://$(join_es_hosts "$ES")
 			fi
 		fi
 		if test -n "$ES_URI"
@@ -98,13 +99,15 @@ then
 			echo "search.uri=\"$ES_URI\"" >> "$CONFIG_FILE"
 			sed -i "s,.*#ssl_password_file.*,ssl_password_file ${SSL_PASSPHRASE_FILE};," "$MAINTENANCE_CONFIG"
 		else
-			echo elasticsearch host not configured
+			echo "elasticsearch host not configured"
 		fi
 	fi
 
 	function join_urls {
+		#shellcheck disable=SC2086
 		echo -n \"$1\"
 		shift
+		#shellcheck disable=SC2086
 		for U do echo -n ,\"$U\"; done
 #		printf ",\"%s\"" $@
 	}
