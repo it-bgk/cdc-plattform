@@ -1,4 +1,5 @@
 name: reviewdog
+# https://github.com/reviewdog/action-shellcheck
 on: [pull_request]
 jobs:
   shellcheck:
