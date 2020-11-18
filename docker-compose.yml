@@ -369,9 +369,6 @@ services:
     #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
     misp-modules:
         image: itbgk/misp-modules
-        build:
-            context: https://github.com/MISP/misp-modules.git
-            dockerfile: docker/Dockerfile
         restart: unless-stopped
         container_name: misp-modules
         networks:
