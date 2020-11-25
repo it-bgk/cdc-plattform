@@ -27,7 +27,7 @@ then
 fi
 
 mkdir -p /var/log/cortex
-chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex
+chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex /etc/cortex
 chgrp "$USERNAME" "$CONFIG_FILE"
 chmod 640 "$CONFIG_FILE"
 

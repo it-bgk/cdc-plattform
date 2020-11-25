@@ -6,12 +6,9 @@ export ES_AUTH_USER=${ES_AUTH_USER:-""}
 export ES_AUTH_PW=${ES_AUTH_PW:-""}
 export AUTH=${AUTH:-"local"}
 export CONFIG_FILE=${CONFIG_FILE:-"/etc/cortex/application.conf"}
-export SECRET=${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}
+#export SECRET=${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}
 export DOCKER_HOST=${DOCKER_HOST:-"unix:///var/run/docker.sock"}
-
 export job_directory=${JOB_DIRECTORY:-"/tmp/cortex-jobs"}
-
-printenv|sort
 
 exec s6-setuidgid cortex \
 /opt/cortex/bin/cortex \
