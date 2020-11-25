@@ -1,6 +1,4 @@
 FROM debian:stable-slim
-ARG VERSION=4.0.1-1
-ENV VERSION ${VERSION}
 ENV CONFIG_FILE=/etc/thehive/application.conf
 ENV DATA_PATH=/opt/thp_data/files/thehive
 WORKDIR ${DATA_PATH}
@@ -15,11 +13,18 @@ RUN set -eu \
         ca-certificates \
     ;curl https://raw.githubusercontent.com/TheHive-Project/TheHive/master/PGP-PUBLIC-KEY | apt-key add - \
     ;echo 'deb https://deb.thehive-project.org release main' | tee -a /etc/apt/sources.list.d/thehive-project.list \
+    ;apt-get purge -y \
+        gnupg2 \
+    ;apt-get autoremove -y \
+    ;rm -rf /var/lib/apt/lists/* \
+    ;
+
+ARG VERSION=4.0.1-1
+ENV VERSION ${VERSION}
+RUN set -eu \
     ;apt-get update \
     ;apt-get install -y --no-install-recommends  \
         thehive4=${VERSION} \
-    ;apt-get purge -y \
-        gnupg \
     ;apt-get autoremove -y \
     ;rm -rf /var/lib/apt/lists/* \
     ;
