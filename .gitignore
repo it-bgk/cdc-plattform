@@ -1,5 +1,8 @@
 .env
 watcher/Watcher
 opencti/docker
-BACKUP
-DATA/ssl/*
+/BACKUP/**
+/DATA/*
+!/DATA/ssl
+/DATA/ssl/*
+!/DATA/traefik/*
