@@ -50,8 +50,15 @@ before_script:
   - curl -L "https://github.com/christian-korneck/docker-pushrm/releases/download/v1.7.0/docker-pushrm_linux_amd64" -o /usr/local/bin/docker-pushrm && chmod +x /usr/local/bin/docker-pushrm
   
 container_scanning:
+  # https://docs.gitlab.com/ee/user/application_security/container_scanning/
   before_script:
    - echo ""
+  parallel:
+    matrix:
+      - DOCKER_IMAGE: $CORTEX_CONTAINER_TEST_IMAGE
+        DOCKERFILE_PATH: .docker/cortex/Dockerfile
+      - DOCKER_IMAGE: $THEHIVE_CONTAINER_TEST_IMAGE
+        DOCKERFILE_PATH: .docker/thehive/Dockerfile
 
 license_scanning:
   before_script:
@@ -75,8 +82,8 @@ build-test-misp-modules:
     matrix:
       - BRANCH: 
           - master
-          - 2.4.121
-
+          - v.2.4.121
+          - v.2.4.134
 
 build-test-cortex:
   stage: build
@@ -85,7 +92,8 @@ build-test-cortex:
     - docker push $CORTEX_CONTAINER_TEST_IMAGE
   parallel:
     matrix:
-      - VERSION: 3.1.0-1
+      - VERSION: 
+        - 3.1.0-1
 
 build-test-thehive:
   stage: build
@@ -94,7 +102,7 @@ build-test-thehive:
     - docker push $THEHIVE_CONTAINER_TEST_IMAGE
   parallel:
     matrix:
-      - VERSION: 4.0.1-1
+      #- VERSION: 4.0.1-1
       - VERSION: 4.0.2-1
 
 
