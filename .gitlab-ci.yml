@@ -68,20 +68,35 @@ build-test-misp-modules:
   script:
     - git clone https://github.com/MISP/misp-modules.git
     - cd misp-modules
+    - git checkout $BRANCH
     - docker build --pull -t $MISP_MODULES_CONTAINER_TEST_IMAGE docker/
     - docker push $MISP_MODULES_CONTAINER_TEST_IMAGE
+  parallel:
+    matrix:
+      - BRANCH: 
+          - master
+          - 2.4.121
+
 
 build-test-cortex:
   stage: build
   script:
-    - docker build --pull -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
+    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
     - docker push $CORTEX_CONTAINER_TEST_IMAGE
+  parallel:
+    matrix:
+      - VERSION: 3.1.0-1
 
 build-test-thehive:
   stage: build
   script:
-    - docker build --pull -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
+    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
     - docker push $THEHIVE_CONTAINER_TEST_IMAGE
+  parallel:
+    matrix:
+      - VERSION: 4.0.1-1
+      - VERSION: 4.0.2-1
+
 
 # test:
 #   stage: test
