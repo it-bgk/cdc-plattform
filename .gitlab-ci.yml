@@ -82,8 +82,8 @@ build-test-misp-modules:
     matrix:
       - BRANCH: 
           - master
-          - v2.4.121
-          - v2.4.134
+          # - v2.4.121
+          # - v2.4.134
 
 build-test-cortex:
   stage: build
