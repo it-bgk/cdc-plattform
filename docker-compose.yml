@@ -154,7 +154,7 @@ services:
         - script.allowed_types=inline
         - thread_pool.search.queue_size=100000
         - thread_pool.write.queue_size=10000
-        - path.repo=backup
+        - path.repo=/backup
         - cluster.name=hive
         # - opendistro_security.ssl.http.enabled=false  
         expose:
