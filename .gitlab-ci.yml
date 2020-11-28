@@ -1,6 +1,5 @@
 ---
 image: docker:git
-
 services:
   - docker:dind
 
@@ -9,10 +8,10 @@ include:
   - template: Container-Scanning.gitlab-ci.yml
   # https://docs.gitlab.com/ee/user/application_security/secret_detection/
   - template: Secret-Detection.gitlab-ci.yml
+    # License Scanning
+  - template: Security/License-Scanning.gitlab-ci.yml
   # Own Template
   - https://gitlab.com/it-bgk/gitlab-templates/-/raw/master/shellcheck.yml
-  # License Scanning
-  - template: Security/License-Scanning.gitlab-ci.yml
 
 stages:
   - build
@@ -27,17 +26,19 @@ variables:
   #
   #DOCKER_USERNAME
   #DOCKER_PASSWORD
+  HUBDOCKERCOM_ORG: itbgk
   #
   #CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   #CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   CORTEX_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE/cortex:$CI_COMMIT_REF_SLUG
-  CORTEX_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/cortex:latest
-  THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE/thehive:$CI_COMMIT_REF_SLUG
-  THEHIVE_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/thehive:latest
-  MISP_MODULES_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE/misp-modules:$CI_COMMIT_REF_SLUG
-  MISP_MODULES_CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE/misp-modules:latest
+  THEHIVE_CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE/thehive4:$CI_COMMIT_REF_SLUG
+  # Final Images
+  CORTEX_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/cortex
+  THEHIVE_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/thehive4
+  MISP_MODULES_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/misp-modules
+  ELASTICSEARCH_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/elasticsearch-oss
   # For Container Scanning
-  CLAIR_OUTPUT: High
+  CLAIR_OUTPUT: Low
 
 before_script:
   # Login to Gitlab Docker Registry
@@ -45,7 +46,6 @@ before_script:
   # Save Version to file (will be read by api.py)
   - echo "$CI_COMMIT_REF_NAME BUILD ${CI_COMMIT_SHA:0:8}" > .version
   - git clone https://gitlab.com/it-bgk/helper-scripts.git /helper_scripts
-  - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG_ES
   - curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
   - curl -L "https://github.com/christian-korneck/docker-pushrm/releases/download/v1.7.0/docker-pushrm_linux_amd64" -o /usr/local/bin/docker-pushrm && chmod +x /usr/local/bin/docker-pushrm
   
@@ -64,47 +64,27 @@ license_scanning:
   before_script:
    - echo ""
 
-secret_detection_default_branch :
+secret_detection:
   before_script:
    - echo ""
 
+
 ###############
-
-build-test-misp-modules:
-  stage: build
-  script:
-    - git clone https://github.com/MISP/misp-modules.git
-    - cd misp-modules
-    - git checkout $BRANCH
-    - docker build --pull -t $MISP_MODULES_CONTAINER_TEST_IMAGE docker/
-    - docker push $MISP_MODULES_CONTAINER_TEST_IMAGE
-  parallel:
-    matrix:
-      - BRANCH: 
-          - master
-          # - v2.4.121
-          # - v2.4.134
-
 build-test-cortex:
   stage: build
+  variables:
+    TAG: $VERSION-$CI_COMMIT_REF_SLUG
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
-    - docker push $CORTEX_CONTAINER_TEST_IMAGE
-  parallel:
-    matrix:
-      - VERSION: 
-        - 3.1.0-1
+    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE:$TAG .docker/cortex
+    - docker push $CORTEX_CONTAINER_TEST_IMAGE:$TAG
 
 build-test-thehive:
   stage: build
+  variables:
+    TAG: $VERSION-$CI_COMMIT_REF_SLUG
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
-    - docker push $THEHIVE_CONTAINER_TEST_IMAGE
-  parallel:
-    matrix:
-      #- VERSION: 4.0.1-1
-      - VERSION: 4.0.2-1
-
+    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE:$TAG .docker/thehive4
+    - docker push $THEHIVE_CONTAINER_TEST_IMAGE:$TAG
 
 # test:
 #   stage: test
@@ -117,10 +97,12 @@ build-test-thehive:
 build-release-cortex:
   stage: release
   script:
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml cortex TAG
+    - source .vars
     - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
     - docker pull $CORTEX_CONTAINER_TEST_IMAGE
-    - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE
-    - docker push $CORTEX_CONTAINER_RELEASE_IMAGE
+    - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE:$TAG
+    - docker push $CORTEX_CONTAINER_RELEASE_IMAGE:$TAG
     - docker run --rm -v $PWD/.docker/cortex:/workspace -e DOCKERHUB_REPOSITORY='$CORTEX_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
@@ -128,10 +110,12 @@ build-release-cortex:
 build-release-thehive:
   stage: release
   script:
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml thehive4 TAG
+    - source .vars
     - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
     - docker pull $THEHIVE_CONTAINER_TEST_IMAGE
-    - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE
-    - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE
+    - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE:$TAG
+    - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE:$TAG
     - docker run --rm -v $PWD/.docker/thehive:/workspace -e DOCKERHUB_REPOSITORY='$THEHIVE_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
@@ -139,11 +123,21 @@ build-release-thehive:
 build-release-misp-modules:
   stage: release
   script:
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml misp-modules TAG
+    - source .vars
+    # Login to hub.docker.com
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
+    # If tag empty use TAG=latest
+    - if [ "$TAG" == "" ]; then TAG=latest; fi
+    # Add MISP-modules code
     - git clone https://github.com/MISP/misp-modules.git
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
-    - docker pull $MISP_MODULES_CONTAINER_TEST_IMAGE
-    - docker tag $MISP_MODULES_CONTAINER_TEST_IMAGE $MISP_MODULES_CONTAINER_RELEASE_IMAGE
-    - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE
+    - cd misp-modules
+    - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
+    # Docker build, push
+    - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD} -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
+    - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD}
+    - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG
+    # Update Description
     - docker run --rm -v $PWD/misp-modules:/workspace -e DOCKERHUB_REPOSITORY='$MISP_MODULES_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
@@ -151,11 +145,12 @@ build-release-misp-modules:
 retag-release-elasticsearch:
   stage: release
   script:
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG
     - source .vars
     - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
-    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES}
-    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG_ES} itbgk/elasticsearch-oss:${TAG_ES}
-    - docker push itbgk/elasticsearch-oss:${TAG_ES}
-    - docker run --rm -v $PWD/.docker/elasticsearch:/workspace -e DOCKERHUB_REPOSITORY='itbgk/elasticsearch-oss' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
+    - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG}
+    - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG} itbgk/elasticsearch-oss:${TAG}
+    - docker push itbgk/elasticsearch-oss:${TAG}
+    - docker run --rm -v $PWD/.docker/elasticsearch:/workspace -e DOCKERHUB_REPOSITORY='$ELASTICSEARCH_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
