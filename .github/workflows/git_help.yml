@@ -1,4 +1,4 @@
-name: Git - Mark Issue with Help Wanted
+name: Git - Mark Issue with Help Wanted - actions-ecosystem
 
 on:
   issues:

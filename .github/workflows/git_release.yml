@@ -1,4 +1,4 @@
-name: actions-ecosystem - Create Release
+name: Git Create Release - actions-ecosystem
 
 on:
   push:
