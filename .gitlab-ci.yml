@@ -37,8 +37,6 @@ variables:
   THEHIVE_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/thehive4
   MISP_MODULES_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/misp-modules
   ELASTICSEARCH_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/elasticsearch-oss
-  # For Container Scanning
-  CLAIR_OUTPUT: Low
 
 before_script:
   # Login to Gitlab Docker Registry
@@ -53,6 +51,9 @@ container_scanning:
   # https://docs.gitlab.com/ee/user/application_security/container_scanning/
   before_script:
    - echo ""
+  variables:
+    SECURE_LOG_LEVEL: debug
+    CLAIR_OUTPUT: Low
   parallel:
     matrix:
       - DOCKER_IMAGE: $CORTEX_CONTAINER_TEST_IMAGE
