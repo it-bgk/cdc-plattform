@@ -37,6 +37,14 @@ backup_minemeld(){
 #     minemeld start
 # }
 
+backup_es(){
+    curl -XPUT 'http://elasticsearch:9200/_snapshot/cortex_backup/snapshot_1?wait_for_completion=true&pretty' -d '{"indices": "_all"}'
+}
+
+restore_es(){
+    curl -XPOST 'http://elasticsearch:9200/_snapshot/cortex_backup/snapshot_1/_restore' -d '{"indices": "_all"}'
+}
+
 backup_cassandra(){
     BACKUP_FILE="/backup/$0_$TIMESTAMP"
     CONTAINER_NAME="thehive-cassandra"
