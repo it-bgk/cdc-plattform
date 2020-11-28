@@ -16,17 +16,17 @@ RUN set -eu \
     ;apt-get purge -y \
         gnupg2 \
     ;apt-get autoremove -y \
-    ;rm -rf /var/lib/apt/lists/* \
+    ;rm -Rf /var/lib/apt/lists/* \
     ;
 
-ARG VERSION=4.0.1-1
+ARG VERSION
 ENV VERSION ${VERSION}
 RUN set -eu \
     ;apt-get update \
     ;apt-get install -y --no-install-recommends  \
         thehive4=${VERSION} \
     ;apt-get autoremove -y \
-    ;rm -rf /var/lib/apt/lists/* \
+    ;rm -Rf /var/lib/apt/lists/* \
     ;
 
 # Add S6 Overlay
