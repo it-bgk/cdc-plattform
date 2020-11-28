@@ -73,13 +73,17 @@ secret_detection:
 build-test-cortex:
   stage: build
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml cortex TAG
+    - source .vars
+    - docker build --pull --build-arg VERSION=$TAG -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
     - docker push $CORTEX_CONTAINER_TEST_IMAGE
 
 build-test-thehive:
   stage: build
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml thehive4 TAG
+    - source .vars
+    - docker build --pull --build-arg VERSION=$TAG -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
     - docker push $THEHIVE_CONTAINER_TEST_IMAGE
 
 # test:
