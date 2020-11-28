@@ -72,19 +72,15 @@ secret_detection:
 ###############
 build-test-cortex:
   stage: build
-  variables:
-    TAG: $VERSION-$CI_COMMIT_REF_SLUG
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE:$TAG .docker/cortex
-    - docker push $CORTEX_CONTAINER_TEST_IMAGE:$TAG
+    - docker build --pull --build-arg VERSION=$VERSION -t $CORTEX_CONTAINER_TEST_IMAGE .docker/cortex
+    - docker push $CORTEX_CONTAINER_TEST_IMAGE
 
 build-test-thehive:
   stage: build
-  variables:
-    TAG: $VERSION-$CI_COMMIT_REF_SLUG
   script:
-    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE:$TAG .docker/thehive4
-    - docker push $THEHIVE_CONTAINER_TEST_IMAGE:$TAG
+    - docker build --pull --build-arg VERSION=$VERSION -t $THEHIVE_CONTAINER_TEST_IMAGE .docker/thehive4
+    - docker push $THEHIVE_CONTAINER_TEST_IMAGE
 
 # test:
 #   stage: test
