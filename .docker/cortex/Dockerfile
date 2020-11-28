@@ -16,10 +16,8 @@ RUN set -eu \
     #;echo 'deb https://deb.thehive-project.org stable main es7' | tee -a /etc/apt/sources.list.d/thehive-project.list \
     ;echo 'deb https://deb.thehive-project.org release main' | tee -a /etc/apt/sources.list.d/thehive-project.list \
     ;curl https://raw.githubusercontent.com/TheHive-Project/Cortex/master/PGP-PUBLIC-KEY| apt-key add - \
-    ;apt-get update \
-    ;apt-get install -y --no-install-recommends \
-        cortex \
-    #;apt-get purge -y gnupg \
+    # ;apt-get purge -y \
+    #     gnupg2 \
     ;apt-get autoremove -y \
     ;rm -Rf /var/lib/apt \
     ;
