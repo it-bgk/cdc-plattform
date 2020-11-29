@@ -1,11 +1,10 @@
-name: Make Security Checks
+name: Sysdig CIS Benchmarks
 on:
   pull_request:
-    paths: 
-      - '.docker/**'
+    # paths: 
+    #   - '.docker/**'
 jobs:
   run:
-    #name: Run
     runs-on: ubuntu-latest
     steps:
     - name: Checkout

@@ -1,8 +1,6 @@
 version: '2.4'
 
 volumes:
-    cert_data:
-        name: cert_data
     es_data:
         name: es_data
     es_config:
@@ -17,6 +15,10 @@ volumes:
         name: minemeld_local
     minemeld_logs:
         name: minemeld_logs
+    misp_cert_data:
+        name: misp_cert_data
+    misp_public_data:
+        name: misp_public_data
 
 networks:
     egress:
@@ -26,16 +28,16 @@ networks:
             config:
                 - subnet: "${EGRESS_IP_SUBNET}.0/27"
         driver_opts:
-            com.docker.network.bridge.name: docker-egress
-    ir_internal:
-        name: ir_internal
+            com.docker.network.bridge.name: docker-egress0
+    traefik_internal:
+        name: traefik_internal
         internal: true
         ipam:
             driver: default
             config:
                 - subnet: "${INTERNAL_IP_SUBNET}.0/27"
         driver_opts:
-            com.docker.network.bridge.name: docker-ir
+            com.docker.network.bridge.name: docker-traefik0
 
 services:
     # https://containrrr.github.io/watchtower/  
@@ -75,14 +77,22 @@ services:
         volumes:
         - acme_data:/etc/traefik/acme
         - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
+        - ${SSL_CA}:/ssl/ca:ro
+        - ${SSL_CERT}:/ssl/cert:ro
+        - ${SSL_KEY}:/ssl/key:ro
         environment: 
             # Entrypoint HTTP
             ## Enable entrypoint
             - TRAEFIK_ENTRYPOINTS_HTTP=true
             ## Set entrypoint to the following port
             - TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS=:80
+            # Redirect traefik to https
+            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_TO=https
+            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
             ## Set forwardheaders
             - TRAEFIK_ENTRYPOINTS_HTTP_FORWARDEDHEADERS_INSECURE=true
+            #
             # Entrypoint HTTPS
             ## Enable entrypoint
             - TRAEFIK_ENTRYPOINTS_HTTPS=true
@@ -92,15 +102,13 @@ services:
             - TRAEFIK_ENTRYPOINTS_HTTPS_FORWARDEDHEADERS_INSECURE=true
             ## Set TLS on this entrypoint
             - TRAEFIK_ENTRYPOINTS_HTTPS_HTTP_TLS=true
-            # Ping function
-            ## Enable Ping
-            - TRAEFIK_PING=false
-            ## Set /ping is available for http and https
-            #TRAEFIK_PING_ENTRYPOINT=http https
             # Dashboard
             - TRAEFIK_API=true
             - TRAEFIK_API_DASHBOARD=true
+            #
             # Provider
+            #  Load dynamic configuration from a file.
+            - TRAEFIK_PROVIDERS_FILE_FILENAME=/traefik_dynamic.yml
             ## Enable Docker provider
             - TRAEFIK_PROVIDERS_DOCKER=true
             ## Set docker provider endpoint
@@ -108,49 +116,33 @@ services:
             ## Disable docker container default exposion
             - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
             ## Set docker network for watching container
-            - TRAEFIK_PROVIDERS_DOCKER_NETWORK=ir_internal
+            - TRAEFIK_PROVIDERS_DOCKER_NETWORK=traefik_internal
             # Logging
             - TRAEFIK_LOG=true
-            - TRAEFIK_LOG_LEVEL=debug
-            - TRAEFIK_ACCESSLOG=true
+            - TRAEFIK_LOG_LEVEL=info
+            - TRAEFIK_ACCESSLOG=false
             # Disable SSL certificate verification. (Default: false)
             - TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY=true
         networks:
             egress:
-            ir_internal:
+            traefik_internal:
         ports:
         - 80:80
         - 443:443
         mem_limit: 1G
         labels:
         - "traefik.enable=true"
-        ### SSL
-        #- "traefik.http.routers.traefik.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
         - "traefik.http.routers.traefik.rule=Host(`traefik.${FQDN}`)"
         - "traefik.http.routers.traefik.service=api@internal"
-    # traefik-certs-dumper:
-        #     image: ldez/traefik-certs-dumper
-        #     restart: unless-stopped
-        #     container_name: traefik-certs-dumper
-        #     volumes:
-        #     -  acme_data:/acme:ro
-        #     -  cert_data:/cert
-        #     network_mode: "none"
-        #     mem_limit: 256M
-        #     command: 
-        #         file --watch --domain-subdir
-        #         --crt-name=fullchain
-        #         --key-name=privkey
-        #         --version=v2
-        #         --source /acme/acme.json
-        #         --dest /cert > /dev/stdout
-    # https://www.elastic.co/guide/en/elasticsearch/reference/6.x/docker.html
+        - "traefik.http.routers.traefik.entrypoints=https"
+        - "traefik.http.routers.traefik.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
     elasticsearch:
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
         container_name: elasticsearch
         networks:
-            ir_internal:
+            traefik_internal:
         environment: 
         - node.name=elasticsearch
         - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
@@ -162,7 +154,7 @@ services:
         - script.allowed_types=inline
         - thread_pool.search.queue_size=100000
         - thread_pool.write.queue_size=10000
-        - path.repo=backup
+        - path.repo=/backup
         - cluster.name=hive
         # - opendistro_security.ssl.http.enabled=false  
         expose:
@@ -171,6 +163,7 @@ services:
             - es_data:/usr/share/elasticsearch/data
             - es_config:/usr/share/elasticsearch/config
             #- ./DATA/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+            - ./BACKUP/elasticsearch:/backup
         ulimits:
             memlock:
                 soft: -1
@@ -193,7 +186,7 @@ services:
         #     #     - ELASTICSEARCH_HOSTS=https://es-01:9200
         #         # - opendistro_security.ssl.http.enabled=false  
         #     networks:
-        #         - ir_internal
+        #         - traefik_internal
         #     volumes:
         #         - es_config:/es_config:ro
         #         - ./DATA/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
@@ -229,7 +222,7 @@ services:
             - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
             - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
         networks:
-            ir_internal:
+            traefik_internal:
         depends_on: 
         - elasticsearch
         - traefik
@@ -238,10 +231,7 @@ services:
             - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
             - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
     cortex:
-        image: itbgk/cortex:latest
-        build:
-            context: .docker/cortex/
-            dockerfile: Dockerfile
+        image: itbgk/cortex:3.1.0-1
         restart: unless-stopped
         container_name: cortex
         volumes:
@@ -264,7 +254,7 @@ services:
             #- job_directory=/tmp/cortex-jobs
         networks:
             egress:
-            ir_internal:
+            traefik_internal:
         depends_on:
         - elasticsearch
         - traefik
@@ -277,29 +267,27 @@ services:
             ### SSL
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
-            # - "traefik.http.middlewares.cortexstrip.stripprefix.prefixes=/cortex"
-            # - "traefik.http.routers.cortex.middlewares=cortexstrip"
+            - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
-        #image: thehiveproject/thehive:latest
-        image: itbgk/thehive4:latest
-        build: 
-            context: .docker/thehive4
+        image: itbgk/thehive4:4.0.2-1
         restart: unless-stopped
         container_name: thehive
         networks:
             egress:
-            ir_internal:
+            traefik_internal:
         #volumes:
         #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
         depends_on:
         - traefik
         - cassandra
         - janusgraph
+        - cortex
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
             - TH_CORTEX_KEY=${TH_CORTEX_KEY}
             - TH_CORTEX_URL=${TH_CORTEX_URL}
             #- TH_CORTEX_PORT=9001
+            - SECRET=${TH_SECRET}
             - TH_ES_HOSTNAME=${TH_ES_HOSTNAME}
             - TH_MISP_URL=${TH_MISP_URL}
             - TH_MISP_KEY=${TH_MISP_KEY}
@@ -308,14 +296,15 @@ services:
             - 9000
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`)"
+            - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=https"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
     janusgraph:
         image: janusgraph/janusgraph:latest
         restart: unless-stopped
         container_name: thehive-janusgraph
         networks: 
-            ir_internal:
+            traefik_internal:
         # healthcheck:
         #     test: ["CMD", "while ! cqlsh -e 'describe cluster' ; do sleep 1; done;"]
         #     interval: 30s
@@ -329,59 +318,59 @@ services:
         volumes: 
             - cassandra_data:/var/lib/cassandra
         networks: 
-            ir_internal:
+            traefik_internal:
         healthcheck:
             test: ["CMD", "cqlsh -e 'describe cluster'|| exit 1"]
             interval: 30s
             timeout: 30s
             retries: 3
             start_period: 60s
-    # misp-internal:
-    #     image: misp
-    #     restart: unless-stopped
-    #     container_name: misp-internal
-    #     networks:
-    #         traefik_internal:
-    #     volumes:
-    #         misp_data:/var/www/MISP
-    #     env_file: env/misp.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         ### SSL
-    #         - "traefik.http.routers.thehive.rule=Host(`${FQDN}`) && PathPrefix(`/misp`))"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    # misp-public:
-    #     image: misp
-    #     restart: unless-stopped
-    #     container_name: misp-public
-    #     networks:
-    #         traefik_internal:
-    #         egress:
-    #     volumes:
-    #         - misp_public_data:/var/www/MISP
-    #     env_file: env/misp.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         ### SSL
-    #         - "traefik.http.routers.thehive.rule=Host(`${FQDN}`) && PathPrefix(`/misp-public`))"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    misp-cert:
+        image: misp
+        restart: unless-stopped
+        container_name: misp-cert
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_cert_data:/var/www/MISP
+        env_file: env/misp-cert.env
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`misp-cert.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    misp-public:
+        image: misp
+        restart: unless-stopped
+        container_name: misp-public
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_public_data:/var/www/MISP
+        env_file: env/misp-public.env
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"
     misp-modules:
         image: itbgk/misp-modules
         restart: unless-stopped
         container_name: misp-modules
         networks:
             egress:
+            traefik_internal:
         expose:
             - 6666
-        #env_file: env/misp-modules.env
+        env_file: env/misp-modules.env
     misp-redis:
         image: redis
         restart: unless-stopped
         container_name: misp-redis
         networks:
-            ir_internal:
+            traefik_internal:
         volumes:
             - misp_redis:/data
         command: redis-server --appendonly yes
@@ -396,7 +385,7 @@ services:
             - minemeld_logs:/opt/minemeld/log 
         networks:
             egress:
-            ir_internal:
+            traefik_internal:
         depends_on: 
         - traefik
         labels:
@@ -404,4 +393,18 @@ services:
             - "traefik.http.routers.minemeld.rule=Host(`minemeld.${FQDN}`)"
             - "traefik.http.services.minemeld.loadbalancer.server.port=443"
             - "traefik.http.services.minemeld.loadbalancer.server.scheme=https"
+            - "traefik.http.routers.minemeld.entrypoints=https"
+    ###
+    nginx:
+        image: nginx:stable-alpine
+        restart: unless-stopped
+        container_name: nginx-static-files
+        volumes:
+        - ./DATA/nginx-static-files/:/opt/nginx-static-files:ro
+        networks: 
+            traefik_internal:
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.nginx-static-files.rule=Host(`s.${FQDN}`)"
+            - "traefik.http.services.nginx-static-files.loadbalancer.server.port=80"
     ###

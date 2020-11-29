@@ -1,0 +1,7 @@
+/etc/cortex true root:cortex 0600 0700
+${DATA_PATH} true cortex:cortex 0600 0700
+/etc/cortex/application.conf false root:cortex 0640 0700
+
+
+#chgrp cortex /etc/cortex/application.conf
+#chmod 640 /etc/cortex/application.conf
