@@ -45,11 +45,12 @@ RUN set -eu \
 
 # Add additional ressources
 RUN set -eu \
-    ;git clone https://github.com/firehol/blocklist-ipsets.git /opt/cortex/analyzer_files/FireHOLBlocklists \
-    ;git clone https://github.com/MISP/misp-warninglists.git /opt/cortex/analyzer_files/misp-warninglists \
-    ;git clone https://github.com/norgalades/SendEmail.git /opt/cortex/responders/SendEmail \
+    ;git clone https://github.com/firehol/blocklist-ipsets.git ${DATA_PATH}/FireHOLBlocklists \
+    ;git clone https://github.com/MISP/misp-warninglists.git ${DATA_PATH}/misp-warninglists \
+    ;git clone https://github.com/norgalades/SendEmail.git /etc/cortex/responders/SendEmail \
+    ;mkdir /etc/cortex/analyzers \
     # NSLR preparation, files can be added only manual
-    ;mkdir /opt/cortex/analyzer_files/nslr \
+    ;mkdir ${DATA_PATH}/nslr \
     ;
 
 COPY application.conf /etc/cortex/

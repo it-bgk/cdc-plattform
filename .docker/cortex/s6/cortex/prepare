@@ -27,12 +27,12 @@ then
 fi
 
 mkdir -p /var/log/cortex
-chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex /etc/cortex
+chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex /etc/cortex /tmp/cortex-jobs
 chgrp "$USERNAME" "$CONFIG_FILE"
 chmod 640 "$CONFIG_FILE"
 
 # Docker settings
-if [ "$(id "$USERNAME" -u)" != 999 ]
+if [ "$(id "$USERNAME" -u)" != "$DOCKER_GID" ]
 then
 	# Add docker group
 	addgroup docker --gid "$DOCKER_GID"

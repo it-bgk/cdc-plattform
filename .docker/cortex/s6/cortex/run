@@ -1,14 +1,14 @@
 #!/usr/bin/with-contenv sh
 
-export ES_HOSTNAME=${ES_HOSTNAME:-"elasticsearch"}
-export ES_URI=${ES_URI:-"http://$ES_HOSTNAME:9200"}
-export ES_AUTH_USER=${ES_AUTH_USER:-""}
-export ES_AUTH_PW=${ES_AUTH_PW:-""}
-export AUTH=${AUTH:-"local"}
-export CONFIG_FILE=${CONFIG_FILE:-"/etc/cortex/application.conf"}
-#export SECRET=${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}
-export DOCKER_HOST=${DOCKER_HOST:-"unix:///var/run/docker.sock"}
-export job_directory=${JOB_DIRECTORY:-"/tmp/cortex-jobs"}
+export ES_HOSTNAME="${ES_HOSTNAME:-"elasticsearch"}"
+export ES_URI="${ES_URI:-"http://$ES_HOSTNAME:9200"}"
+export ES_AUTH_USER="${ES_AUTH_USER:-""}"
+export ES_AUTH_PW="${ES_AUTH_PW:-""}"
+export AUTH="${AUTH:-"local"}"
+export CONFIG_FILE="${CONFIG_FILE:-"/etc/cortex/application.conf"}"
+#export SECRET="${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}"
+export DOCKER_HOST="${DOCKER_HOST:-"unix:///var/run/docker.sock"}"
+export job_directory="${JOB_DIRECTORY:-"/tmp/cortex-jobs"}"
 
 exec s6-setuidgid cortex \
 /opt/cortex/bin/cortex \
