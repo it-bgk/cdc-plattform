@@ -99,7 +99,7 @@ backup_elasticsearch(){
 
 restore_elasticsearch(){
     docker-compose up -d elasticsearch
-    #echo "Wait 10 seconds"&& sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "."
+    read -rp "Press Enter to continue..."
     init_elasticsearch
 
     echo "Print all current snapshots:"
@@ -110,14 +110,14 @@ restore_elasticsearch(){
 
     $DOCKER_ELASTICSEARCH_CMD curl -X POST \
         "http://elasticsearch:9200/_snapshot/backup/$RESTORE_POINT/_restore" \
-        -H 'Content-Type: application/json' -d '{
+        -H "Content-Type: application/json" -d "{
             "indices": "_all",
             "ignore_unavailable": true,
             "include_global_state": true,              
             "rename_pattern": "index_(.+)",
             "rename_replacement": "restored_index_$1",
             "include_aliases": false
-            }'
+            }"
     $DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_status'
 }
 
