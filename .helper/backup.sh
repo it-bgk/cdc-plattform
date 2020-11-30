@@ -119,7 +119,6 @@ restore_elasticsearch(){
             "include_aliases": false
             }'
     $DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_status'
-
 }
 
 backup_cassandra(){
