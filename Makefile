@@ -18,14 +18,8 @@ update-toc:
 	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc --replace README.md
 
 ####
-backup_es_init:
-	curl -XPUT 'http://elasticsearch:9200/_snapshot/cortex_backup' -d '{
-		"type": "fs",
-		"settings": {
-			"location": "/backup",
-			"compress": true
-		}
-	}'
+init_es:
+	./.helper/backup.sh init elasticsearch
 
 backup_es:
 	./.helper/backup.sh backup elasticsearch
@@ -33,6 +27,12 @@ backup_es:
 restore_es:
 	./.helper/backup.sh restore elasticsearch
 
+cleanup_es:
+	./.helper/backup.sh cleanup elasticsearch
+	
+status_es:
+	./.helper/backup.sh status elasticsearch
+	
 backup_cassandra:
 	./.helper/backup.sh backup cassandra
 
