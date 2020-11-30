@@ -138,6 +138,7 @@ services:
         - "traefik.http.routers.traefik.middlewares=auth"
         - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
     elasticsearch:
+        #image: amazon/opendistro-for-elasticsearch:latest
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
         container_name: elasticsearch
@@ -150,13 +151,12 @@ services:
         - "http.host=0.0.0.0"
         - "discovery.type=single-node"
         - "transport.host=0.0.0.0"
-        #- "xpack.security.enabled=false"
         - script.allowed_types=inline
         - thread_pool.search.queue_size=100000
         - thread_pool.write.queue_size=10000
         - path.repo=/backup
         - cluster.name=hive
-        # - opendistro_security.ssl.http.enabled=false  
+        #- opendistro_security.ssl.http.enabled=false  
         expose:
             - 9200 # HTTP
         volumes:
@@ -232,26 +232,37 @@ services:
             - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
     cortex:
         image: itbgk/cortex:3.1.0-1
+        build:
+            context: .docker/cortex
+            args: 
+                VERSION: 3.1.0-1
         restart: unless-stopped
         container_name: cortex
         volumes:
             #- ./DATA/cortex/application.conf:/etc/cortex/application.conf
             - /var/run/docker.sock:/var/run/docker.sock:ro # https://github.com/TheHive-Project/Cortex/issues/260#issuecomment-673292919
             - es_config:/es_config:ro
-            - ./DATA/cortex/nslr:/opt/cortex/analyzer_files/nslr:ro
+            - ./DATA/cortex/nslr:/opt/cortex/nslr:ro
+            - /tmp/cortex-jobs:/tmp/cortex-jobs
         environment: 
             - SECRET=${CORTEX_SECRET}
             - AUTH=${CORTEX_AUTH}
-            - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
+            - AUTH_AD_DOMAINFQDN=${CORTEX_AUTH_AD_DOMAINFQDN}
             - AUTH_AD_SERVERNAMES=${CORTEX_AUTH_AD_SERVERNAMES}
+            - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
+            - AUTH_LDAP_SERVER=${AUTH_LDAP_SERVER}
+            - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}
+            - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}
+            - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}
+            - AUTH_LDAP_FILTER=${AUTH_LDAP_FILTER}
             - ES_URI=${CORTEX_ES_URL}
             - ES_AUTH_USER=${CORTEX_ES_AUTH_USER}
             - ES_AUTH_PW=${CORTEX_ES_AUTH_PW}
             - CONFIG_FILE=${CORTEX_CONFIG_FILE}
             - DOCKER_HOST=${CORTEX_DOCKER_HOST}
+            - DOCKER_GID=${CORTEX_DOCKER_GID} # Set the correct local docker group GID
+            - CORTEX_JOBS=/tmp/cortex-jobs
             # - JAVA_OPTS=-Djavax.net.ssl.trustStore=/etc/thehive/truststore/truststore.jks
-            #- DOCKER_GID=999 # Set the correct local docker group GID
-            #- job_directory=/tmp/cortex-jobs
         networks:
             egress:
             traefik_internal:
@@ -270,6 +281,10 @@ services:
             - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
         image: itbgk/thehive4:4.0.2-1
+        build:
+            context: .docker/thehive4
+            args: 
+                VERSION: 4.0.2-1
         restart: unless-stopped
         container_name: thehive
         networks:
@@ -280,8 +295,6 @@ services:
         depends_on:
         - traefik
         - cassandra
-        - janusgraph
-        - cortex
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
             - TH_CORTEX_KEY=${TH_CORTEX_KEY}
@@ -292,6 +305,12 @@ services:
             - TH_MISP_URL=${TH_MISP_URL}
             - TH_MISP_KEY=${TH_MISP_KEY}
             - TH_MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
+            - AUTH_AD_WINDOMAIN=${TH_AUTH_AD_WINDOMAIN}
+            - AUTH_AD_DNSDOMAIN=${TH_AUTH_AD_DNSDOMAIN}
+            - AUTH_AD_USESSL=${TH_AUTH_AD_USESSL:-false}
+            - AUTH_AD_HOSTS=${TH_AUTH_AD_HOSTS}
+            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
+            - AUTH_DEFAULTUSERDOMAIN=${TH_AUTH_DEFAULTUSERDOMAIN}
         expose:
             - 9000
         labels:
@@ -299,22 +318,10 @@ services:
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
             - "traefik.http.routers.thehive.entrypoints=https"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
-    janusgraph:
-        image: janusgraph/janusgraph:latest
-        restart: unless-stopped
-        container_name: thehive-janusgraph
-        networks: 
-            traefik_internal:
-        # healthcheck:
-        #     test: ["CMD", "while ! cqlsh -e 'describe cluster' ; do sleep 1; done;"]
-        #     interval: 30s
-        #     timeout: 30s
-        #     retries: 3
-        #     start_period: 60s
     cassandra:
         image: cassandra:latest
         restart: unless-stopped
-        container_name: thehive-cassandra
+        container_name: th-cassandra
         volumes: 
             - cassandra_data:/var/lib/cassandra
         networks: 
