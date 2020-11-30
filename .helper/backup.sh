@@ -108,16 +108,17 @@ restore_elasticsearch(){
     set -xv
     read -rp "Snapshot to restore: " RESTORE_POINT
 
+    #shellcheck disable=SC2016
     $DOCKER_ELASTICSEARCH_CMD curl -X POST \
         "http://elasticsearch:9200/_snapshot/backup/$RESTORE_POINT/_restore" \
-        -H "Content-Type: application/json" -d "{
+        -H "Content-Type: application/json" -d '{
             "indices": "_all",
             "ignore_unavailable": true,
-            "include_global_state": true,              
+            "include_global_state": true,
             "rename_pattern": "index_(.+)",
             "rename_replacement": "restored_index_$1",
             "include_aliases": false
-            }"
+            }'
     $DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_status'
 }
 
