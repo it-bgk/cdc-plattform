@@ -2,7 +2,7 @@
 BASE="$PWD"
 TIMESTAMP=$(date +%F-%H:%M-%Z)
 DOCKER_MINEMELD_CMD="docker run --rm -ti --entrypoint="" -v minemeld_local:/opt/minemeld/local:ro -v $BASE/BACKUP/minemeld:/backup  paloaltonetworks/minemeld"
-
+DOCKER_ELASTICSEARCH_CMD="docker exec -ti elasticsearch"
 
 func_create_folder(){
     [ -d "$BASE/BACKUP/$1" ] || mkdir -p "$BASE/BACKUP/$1"
@@ -37,12 +37,89 @@ backup_minemeld(){
 #     minemeld start
 # }
 
-backup_es(){
-    curl -XPUT 'http://elasticsearch:9200/_snapshot/cortex_backup/snapshot_1?wait_for_completion=true&pretty' -d '{"indices": "_all"}'
+init_elasticsearch(){
+    $DOCKER_ELASTICSEARCH_CMD curl -X PUT "http://localhost:9200/_snapshot/backup?pretty" \
+        -H 'Content-Type: application/json' -d '{
+            "type": "fs",
+            "settings": {
+                "location": "/backup",
+                "compress": true
+            }
+        }'
+
+    # $DOCKER_ELASTICSEARCH_CMD curl -X PUT "localhost:9200/_slm/policy/daily-snapshots?pretty" \
+    #     -u admin:admin --insecure \
+    #     -H 'Content-Type: application/json' -d'
+    #         {
+    #         "schedule": "0 30 1 * * ?", 
+    #         "name": "daily-snap-{now/d}", 
+    #         "repository": "backup", 
+    #         "config": { 
+    #             "indices": ["*"], 
+    #             "ignore_unavailable": false,
+    #             "include_global_state": true
+    #         },
+    #         "retention": { 
+    #             "expire_after": "30d", 
+    #             "min_count": 5, 
+    #             "max_count": 50 
+    #         }
+    #     }
+    #     '
 }
 
-restore_es(){
-    curl -XPOST 'http://elasticsearch:9200/_snapshot/cortex_backup/snapshot_1/_restore' -d '{"indices": "_all"}'
+status_elasticsearch(){
+    $DOCKER_ELASTICSEARCH_CMD curl -X GET "localhost:9200/_snapshot/_all?human&pretty"
+    #$DOCKER_ELASTICSEARCH_CMD curl -X GET "localhost:9200/_slm/policy/daily-snapshots?human&pretty" -u admin:admin --insecure
+    $DOCKER_ELASTICSEARCH_CMD curl -X GET "localhost:9200/_snapshot/_status?human&pretty"
+}
+
+cleanup_elasticsearch(){
+    $DOCKER_ELASTICSEARCH_CMD curl -X POST "localhost:9200/_snapshot/backup/_cleanup?pretty"
+}
+
+backup_elasticsearch(){
+    #$DOCKER_ELASTICSEARCH_CMD curl -X POST "localhost:9200/_slm/policy/daily-snapshots/_execute?pretty"
+    #$DOCKER_ELASTICSEARCH_CMD curl -X PUT "localhost:9200/_snapshot/backup/<snapshot-{now/d}>?pretty"
+    $DOCKER_ELASTICSEARCH_CMD curl -X PUT "localhost:9200/_snapshot/backup/%3Csnapshot-%7Bnow%2Fd%7D%3E?pretty"
+    $DOCKER_ELASTICSEARCH_CMD  curl -X PUT "localhost:9200/_snapshot/backup/%3Csnapshot-%7Bnow%2Fd%7D%3E?wait_for_completion=true&pretty" -H 'Content-Type: application/json' -d'
+    {
+        "indices": "_all",
+        "ignore_unavailable": true,
+        "include_global_state": true,
+        "metadata": {
+            "taken_by": "backup_script",
+            "taken_because": "daily backup"
+        }
+    }
+    '
+
+
+}
+
+restore_elasticsearch(){
+    docker-compose up -d elasticsearch
+    #echo "Wait 10 seconds"&& sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "." && sleep 1 && echo "."
+    init_elasticsearch
+
+    echo "Print all current snapshots:"
+    $DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_all?pretty'|grep '"snapshot" : "'| cut -d : -f 2|cut -d \' -f 1
+    #$DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_status'
+    set -xv
+    read -rp "Snapshot to restore: " RESTORE_POINT
+
+    $DOCKER_ELASTICSEARCH_CMD curl -X POST \
+        "http://elasticsearch:9200/_snapshot/backup/$RESTORE_POINT/_restore" \
+        -H 'Content-Type: application/json' -d '{
+            "indices": "_all",
+            "ignore_unavailable": true,
+            "include_global_state": true,              
+            "rename_pattern": "index_(.+)",
+            "rename_replacement": "restored_index_$1",
+            "include_aliases": false
+            }'
+    $DOCKER_ELASTICSEARCH_CMD curl -X GET 'http://elasticsearch:9200/_snapshot/backup/_status'
+
 }
 
 backup_cassandra(){
@@ -67,11 +144,7 @@ restore_cassandra(){
 
 ###
 func_preparation
-[ "$1" == "backup" ] && [ "$2" == "minemeld" ] && backup_minemeld
-[ "$1" == "restore" ] && [ "$2" == "minemeld" ] && restore_minemeld
-
-[ "$1" == "backup" ] && [ "$2" == "cassandra" ] && backup_cassandra
-[ "$1" == "restore" ] && [ "$2" == "cassandra" ] && restore_cassandra
-set -xv
+set -x
+[ "$1" != "" ] && [ "$2" != "" ] && "$1_$2"  && exit 0
 
 echo "exit $0."
