@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv sh
-export CASSANDRA_DB_HOSTNAME=${CASSANDRA_DB_HOSTNAME:-"cassandra"}
+export CASSANDRA_DB_HOSTNAME=${CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
 export TH_CORTEX_URL=${TH_CORTEX_URL}
 export TH_CORTEX_KEY=${TH_CORTEX_KEY}
 export TH_MISP_URL=${TH_MISP_URL}
