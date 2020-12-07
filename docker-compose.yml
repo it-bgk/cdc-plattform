@@ -250,18 +250,19 @@ services:
             - AUTH_AD_DOMAINFQDN=${CORTEX_AUTH_AD_DOMAINFQDN}
             - AUTH_AD_SERVERNAMES=${CORTEX_AUTH_AD_SERVERNAMES}
             - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
-            - AUTH_LDAP_SERVER=${AUTH_LDAP_SERVER}
-            - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}
-            - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}
-            - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}
-            - AUTH_LDAP_FILTER=${AUTH_LDAP_FILTER}
+            - AUTH_LDAP_SERVER=${CORTEX_AUTH_LDAP_SERVER}
+            - AUTH_LDAP_BIND_DN=${CORTEX_AUTH_LDAP_BIND_DN}
+            - AUTH_LDAP_BIND_PASSWORD=${CORTEX_AUTH_LDAP_BIND_PASSWORD}
+            - AUTH_LDAP_BASE_DN=${CORTEX_AUTH_LDAP_BASE_DN}
+            - AUTH_LDAP_FILTER=${CORTEX_AUTH_LDAP_FILTER}
+            - ES_HOSTNAME=${CORTEX_ES_HOSTNAME}
             - ES_URI=${CORTEX_ES_URL}
             - ES_AUTH_USER=${CORTEX_ES_AUTH_USER}
             - ES_AUTH_PW=${CORTEX_ES_AUTH_PW}
             - CONFIG_FILE=${CORTEX_CONFIG_FILE}
             - DOCKER_HOST=${CORTEX_DOCKER_HOST}
             - DOCKER_GID=${CORTEX_DOCKER_GID} # Set the correct local docker group GID
-            - CORTEX_JOBS=/tmp/cortex-jobs
+            - JOB_DIRECTORY=${CORTEX_JOB_DIRECTORY}
             # - JAVA_OPTS=-Djavax.net.ssl.trustStore=/etc/thehive/truststore/truststore.jks
         networks:
             egress:
