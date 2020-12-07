@@ -15,8 +15,8 @@ volumes:
         name: minemeld_local
     minemeld_logs:
         name: minemeld_logs
-    misp_cert_data:
-        name: misp_cert_data
+    misp_internal_data:
+        name: misp_internal_data
     misp_public_data:
         name: misp_public_data
 
@@ -195,41 +195,41 @@ services:
         #         - "traefik.enable=true"
         #         - "traefik.http.routers.kibana.rule=PathPrefix(`/kibana`)" #||PathPrefix(`/app/kibana`)||PathPrefix(`/login`)||PathPrefix(`/bundles`)"
         #         - "traefik.http.services.kibana.loadbalancer.server.port=5601"
-    cerebro:
-        image: lmenezes/cerebro
-        restart: unless-stopped
-        container_name: cerebro
-        volumes:
-            - "./DATA/cerebro/application.conf:/opt/cerebro/conf/application.conf"
-        environment: 
-            - SECRET_KEY=${CEREBRO_SECRET}
-            - BASE_PATH=${CEREBRO_BASE_PATH}
-            - ES_URL=${CEREBRO_ES_URL}
-            - ES_AUTH_USER=${CEREBRO_ES_AUTH_USER}
-            - ES_AUTH_PW=${CEREBRO_ES_AUTH_PW}
-            - AUTH_TYPE=${CEREBRO_AUTH_TYPE}
-            - BASIC_AUTH_USER=${CEREBRO_BASIC_AUTH_USER}
-            - BASIC_AUTH_PWD=${CEREBRO_BASIC_AUTH_PW}
-            - LDAP_URL=${CEREBRO_LDAP_URL}
-            - LDAP_BASE_DN=${CEREBRO_LDAP_BASE_DN}
-            # Usually method should  be "simple" otherwise, set it to the SASL mechanisms
-            - LDAP_METHOD=simple
-            - LDAP_USER_TEMPLATE=${CEREBRO_LDAP_USER_TEMPLATE}
-            - LDAP_BIND_DN=${CEREBRO_LDAP_BIND_DN}
-            - LDAP_BIND_PWD=${CEREBRO_LDAP_BIND_PW}
-            - LDAP_GROUP_BASE_DN=${CEREBRO_LDAP_GROUP_BASE_DN}
-            - LDAP_USER_ATTR=${CEREBRO_LDAP_USER_ATTR}
-            - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
-            - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
-        networks:
-            traefik_internal:
-        depends_on: 
-        - elasticsearch
-        - traefik
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
-            - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
+    # cerebro:
+        # image: lmenezes/cerebro
+        # restart: unless-stopped
+        # container_name: cerebro
+        # volumes:
+        #     - "./DATA/cerebro/application.conf:/opt/cerebro/conf/application.conf"
+        # environment: 
+        #     - SECRET_KEY=${CEREBRO_SECRET}
+        #     - BASE_PATH=${CEREBRO_BASE_PATH}
+        #     - ES_URL=${CEREBRO_ES_URL}
+        #     - ES_AUTH_USER=${CEREBRO_ES_AUTH_USER}
+        #     - ES_AUTH_PW=${CEREBRO_ES_AUTH_PW}
+        #     - AUTH_TYPE=${CEREBRO_AUTH_TYPE}
+        #     - BASIC_AUTH_USER=${CEREBRO_BASIC_AUTH_USER}
+        #     - BASIC_AUTH_PWD=${CEREBRO_BASIC_AUTH_PW}
+        #     - LDAP_URL=${CEREBRO_LDAP_URL}
+        #     - LDAP_BASE_DN=${CEREBRO_LDAP_BASE_DN}
+        #     # Usually method should  be "simple" otherwise, set it to the SASL mechanisms
+        #     - LDAP_METHOD=simple
+        #     - LDAP_USER_TEMPLATE=${CEREBRO_LDAP_USER_TEMPLATE}
+        #     - LDAP_BIND_DN=${CEREBRO_LDAP_BIND_DN}
+        #     - LDAP_BIND_PWD=${CEREBRO_LDAP_BIND_PW}
+        #     - LDAP_GROUP_BASE_DN=${CEREBRO_LDAP_GROUP_BASE_DN}
+        #     - LDAP_USER_ATTR=${CEREBRO_LDAP_USER_ATTR}
+        #     - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
+        #     - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
+        # networks:
+        #     traefik_internal:
+        # depends_on: 
+        # - elasticsearch
+        # - traefik
+        # labels:
+        #     - "traefik.enable=true"
+        #     - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
+        #     - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
     cortex:
         image: itbgk/cortex:3.1.0-1
         build:
@@ -250,18 +250,19 @@ services:
             - AUTH_AD_DOMAINFQDN=${CORTEX_AUTH_AD_DOMAINFQDN}
             - AUTH_AD_SERVERNAMES=${CORTEX_AUTH_AD_SERVERNAMES}
             - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
-            - AUTH_LDAP_SERVER=${AUTH_LDAP_SERVER}
-            - AUTH_LDAP_BIND_DN=${AUTH_LDAP_BIND_DN}
-            - AUTH_LDAP_BIND_PASSWORD=${AUTH_LDAP_BIND_PASSWORD}
-            - AUTH_LDAP_BASE_DN=${AUTH_LDAP_BASE_DN}
-            - AUTH_LDAP_FILTER=${AUTH_LDAP_FILTER}
+            - AUTH_LDAP_SERVER=${CORTEX_AUTH_LDAP_SERVER}
+            - AUTH_LDAP_BIND_DN=${CORTEX_AUTH_LDAP_BIND_DN}
+            - AUTH_LDAP_BIND_PASSWORD=${CORTEX_AUTH_LDAP_BIND_PASSWORD}
+            - AUTH_LDAP_BASE_DN=${CORTEX_AUTH_LDAP_BASE_DN}
+            - AUTH_LDAP_FILTER=${CORTEX_AUTH_LDAP_FILTER}
+            - ES_HOSTNAME=${CORTEX_ES_HOSTNAME}
             - ES_URI=${CORTEX_ES_URL}
             - ES_AUTH_USER=${CORTEX_ES_AUTH_USER}
             - ES_AUTH_PW=${CORTEX_ES_AUTH_PW}
             - CONFIG_FILE=${CORTEX_CONFIG_FILE}
             - DOCKER_HOST=${CORTEX_DOCKER_HOST}
             - DOCKER_GID=${CORTEX_DOCKER_GID} # Set the correct local docker group GID
-            - CORTEX_JOBS=/tmp/cortex-jobs
+            - JOB_DIRECTORY=${CORTEX_JOB_DIRECTORY}
             # - JAVA_OPTS=-Djavax.net.ssl.trustStore=/etc/thehive/truststore/truststore.jks
         networks:
             egress:
@@ -332,23 +333,23 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    misp-cert:
-        image: misp
+    misp-internal:
+        image: itbgk/misp
         restart: unless-stopped
-        container_name: misp-cert
+        container_name: misp-internal
         networks:
             traefik_internal:
             egress:
         volumes:
-            - misp_cert_data:/var/www/MISP
-        env_file: env/misp-cert.env
+            - misp_internal_data:/var/www/MISP
+        env_file: env/misp-internal.env
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp-cert.${FQDN}`)"
+            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
             - "traefik.http.routers.thehive.entrypoints=http"
             - "traefik.http.services.thehive.loadbalancer.server.port=80"       
     misp-public:
-        image: misp
+        image: itbgk/misp
         restart: unless-stopped
         container_name: misp-public
         networks:
