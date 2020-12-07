@@ -17,7 +17,6 @@ stages:
   - build
   - test
   - release
-  - update_description
 
 variables:
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
@@ -132,14 +131,12 @@ build-release-misp:
     - if [ "$TAG" == "" ]; then TAG=latest; fi
     # Add MISP-modules code
     - git clone https://github.com/MISP/misp-docker.git
-    - cd web
+    - cd misp-docker/web
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     # Docker build, push
-    - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD} -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
-    - docker push $MISP_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD}
+    - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
+    - docker push $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$TAG
-    # Update Description
-    #- docker run --rm -v $PWD/misp-modules:/workspace -e DOCKERHUB_REPOSITORY='$MISP_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
 
@@ -157,11 +154,9 @@ build-release-misp-modules:
     - cd misp-modules
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     # Docker build, push
-    - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD} -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
-    - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD}
+    - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
+    - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG
-    # Update Description
-    - docker run --rm -v $PWD/misp-modules:/workspace -e DOCKERHUB_REPOSITORY='$MISP_MODULES_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
   only:
     - master
 
@@ -176,13 +171,3 @@ retag-release-elasticsearch:
     - docker push itbgk/elasticsearch-oss:${TAG}
   only:
     - master
-
-description-release-elasticsearch:
-  stage: update_description
-  script:
-    - docker run --rm -v $PWD/.docker/cortex:/workspace -e DOCKERHUB_REPOSITORY='$CORTEX_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
-    - docker run --rm -v $PWD/.docker/thehive:/workspace -e DOCKERHUB_REPOSITORY='$THEHIVE_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
-    - docker run --rm -v $PWD/.docker/elasticsearch:/workspace -e DOCKERHUB_REPOSITORY='$ELASTICSEARCH_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
-  only:
-    - master
-
