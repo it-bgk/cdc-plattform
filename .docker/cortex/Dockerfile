@@ -57,6 +57,7 @@ COPY application.conf /etc/cortex/
 #COPY s6/permissions /etc/fix-attrs.d/00-cortex-set-permissions
 COPY s6/cortex/prepare /etc/cont-init.d/00-cortex-prepare
 COPY s6/cortex/run /etc/services.d/cortex/run
+COPY s6/cortex/default_vars.sh /default_vars.sh
 
 ENTRYPOINT ["/init"]
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD curl --fail http://127.0.0.1:9001 || exit 1

@@ -1,23 +1,11 @@
-#!/usr/bin/with-contenv sh
+#!/usr/bin/with-contenv bash
+set -x
+source /default_vars.sh
+printenv|sort
 
 USERNAME=${USERNAME:-"cortex"}
 [ -z "$GID" ] && GID=1000
 [ -z "$UID" ] && UID=1000
-[ -z "$OWN_CONFIG" ] && OWN_CONFIG=""
-
-export DOCKER_GID=${DOCKER_GID:-"999"} # Set the correct local docker group GID
-
-#CONFIG_SECRET=${CONFIG_SECRET:-"1"}
-#CONFIG_ES=${CONFIG_ES:-"1"}
-export CONFIG=${CONFIG:-"1"}
-
-# ANALYZER_PATH=${ANALYZER_PATH:-"/etc/cortex/analyzers.json"}
-# ANALYZER_URLS=${ANALYZER_URLS:-"()"}
-# RESPONDER_PATH=${RESPONDER_PATH:-"/etc/cortex/responders.json"}
-# RESPONDER_URLS=${RESPONDER_URLS:-"()"}
-# START_DOCKER=${START_DOCKER:-"0"}
-# SHOW_SECRET=${SHOW_SECRET:-"0"}
-
 
 # Check user id
 if [ -n "$(id "$USERNAME" > /dev/null)" ]
@@ -27,7 +15,7 @@ then
 fi
 
 mkdir -p /var/log/cortex
-chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex /etc/cortex /tmp/cortex-jobs
+chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /var/log/cortex /opt/cortex /etc/cortex ${JOB_DIRECTORY}
 chgrp "$USERNAME" "$CONFIG_FILE"
 chmod 640 "$CONFIG_FILE"
 
@@ -40,10 +28,10 @@ then
 	usermod -a -G docker "$USERNAME"
 fi
 
-# if [ "$CONFIG" == 1 ]
-# then
-# # [ -z $(grep "play.http.secret.key" "$CONFIG_FILE") ] && echo "play.http.secret.key=\"$SECRET\"" >> "$CONFIG_FILE"
-# # [ -z $(grep "play.http.secret.key" "$CONFIG_FILE") ] && echo "play.http.secret.key=\"$SECRET\"" >> "$CONFIG_FILE"
+# Setup application.conf
+if [ "$CONFIG" -eq 1 ]
+then
+set -xv
 # 	#################
 #     if test $CONFIG_ES = 1
 # 	then
@@ -85,12 +73,32 @@ fi
 # 	[ -z $(grep "analyzer.urls" "$CONFIG_FILE") ] && echo analyzer.urls=\[$(join_urls ${ANALYZER_URLS[@]})\] >> "$CONFIG_FILE"
 # 	[ -z $(grep "responder.urls" "$CONFIG_FILE") ] && echo responder.urls=\[$(join_urls ${RESPONDER_URLS[@]})\] >> "$CONFIG_FILE"
 
-# fi
+
+	if [ "$AUTH" == "ad" ]
+	then
+		{
+			echo "auth.provider=[$AUTH, local]";
+			echo "auth.ad.serverNames=[$AUTH_AD_SERVERNAMES]";
+		}	>> "$CONFIG_FILE"
+	elif [ "$AUTH" == "ldap" ]
+	then
+		{
+			echo "auth.provider=[$AUTH, local]";
+			echo "auth.ldap.serverNames = [$AUTH_LDAP_SERVERNAMES]";
+
+		}	>> "$CONFIG_FILE"
+	else
+		{
+			echo "auth.provider=[local]";
+		}	>> "$CONFIG_FILE"
+	fi
+
+fi
 
 
-# echo "config file $CONFIG_FILE is:"
-# echo "##################"
-# cat "$CONFIG_FILE"
-# echo "##################"
+echo "config file $CONFIG_FILE is:"
+echo "##################"
+cat "$CONFIG_FILE"
+echo "##################"
 
 
