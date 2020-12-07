@@ -135,13 +135,13 @@ build-release-misp:
     - cd web
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     # Docker build, push
-    - set -xv; docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD} -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
+    - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD} -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:${git rev-parse HEAD}
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$TAG
     # Update Description
-    - docker run --rm -v $PWD/misp-modules:/workspace -e DOCKERHUB_REPOSITORY='$MISP_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
-  # only:
-  #   - master
+    #- docker run --rm -v $PWD/misp-modules:/workspace -e DOCKERHUB_REPOSITORY='$MISP_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
+  only:
+    - master
 
 build-release-misp-modules:
   stage: release
@@ -183,6 +183,6 @@ description-release-elasticsearch:
     - docker run --rm -v $PWD/.docker/cortex:/workspace -e DOCKERHUB_REPOSITORY='$CORTEX_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
     - docker run --rm -v $PWD/.docker/thehive:/workspace -e DOCKERHUB_REPOSITORY='$THEHIVE_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
     - docker run --rm -v $PWD/.docker/elasticsearch:/workspace -e DOCKERHUB_REPOSITORY='$ELASTICSEARCH_CONTAINER_RELEASE_IMAGE' -e DOCKERHUB_USERNAME='$DOCKER_USERNAME' -e DOCKERHUB_PASSWORD='$DOCKER_PASSWORD' -e README_FILEPATH='/workspace/README.md' peterevans/dockerhub-description:2.1.0
-  # only:
-  #   - master
+  only:
+    - master
 
