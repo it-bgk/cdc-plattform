@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 SECRET=${SECRET}
 AUTH=${AUTH:-"local"}
 AUTH_AD_DOMAINFQDN=${AUTH_AD_DOMAINFQDN}
