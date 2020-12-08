@@ -1,6 +1,6 @@
 #!/bin/sh
 DEBUG=${DEBUG:-"0"}
-[ $DEBUG -eq 0 ] || set -x
+[ "$DEBUG" -eq 0 ] || set -x
 
 AUTH=${AUTH:-"local"}
 AUTH_AD_DOMAINFQDN=${AUTH_AD_DOMAINFQDN}

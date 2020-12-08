@@ -1,6 +1,6 @@
 #!/bin/sh
 DEBUG=${DEBUG:-"0"}
-[ $DEBUG -eq 0 ] || set -x
+[ "$DEBUG" -eq 0 ] || set -x
 
 CASSANDRA_DB_HOSTNAME=${CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
 CONFIG_FILE=${CONFIG_FILE:-"/etc/thehive/application.conf"}
