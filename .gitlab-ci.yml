@@ -11,7 +11,7 @@ include:
     # License Scanning
   - template: Security/License-Scanning.gitlab-ci.yml
   # Own Template
-  - https://gitlab.com/it-bgk/gitlab-templates/-/raw/master/shellcheck.yml
+  #- https://gitlab.com/it-bgk/gitlab-templates/-/raw/master/shellcheck.yml
 
 stages:
   - build

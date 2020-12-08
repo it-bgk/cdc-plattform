@@ -14,89 +14,22 @@ The goal of the project is to make the installation and maintenance easier to se
 - [Project: cdc-plattform](#project-cdc-plattform)
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
-  - [Hardware Requirements](#hardware-requirements)
-  - [Software Requirements](#software-requirements)
-  - [Firewall Requirements](#firewall-requirements)
-    - [Github Repository](#github-repository)
-    - [Docker Images](#docker-images)
-    - [For Intelligence sources](#for-intelligence-sources)
-  - [Configuration Requirements](#configuration-requirements)
 - [Usage](#usage)
-  - [Main plattform](#main-plattform)
-  - [Optional: Watcher](#optional-watcher)
-  - [Optional: OpenCTI](#optional-opencti)
 - [Contribution](#contribution)
 - [Credits](#credits)
 - [License](#license)
 <!-- ToC end -->
 
 # Installation
-
-## Hardware Requirements
-if you create your sever you should use at least:
-- 4 CPU cores
-- 8 GB of RAM
-- \>25 GB of disk space  (the faster the better), but it depends on your requirement
-  - For MISP:
-  - For TheHive:
-  - For Cortex:
-  - For Watcher:
-  - For OpenCTI: 
-
-
-## Software Requirements
-
-1. Install docker: https://docs.docker.com/engine/install/
-2. Install docker-compose: https://docs.docker.com/compose/install/
-3. Install git
-4. [Optional] Install make
-5. Clone git repository: `git clone https://github.com/it-bgk/cdc-plattform.git /opt/cdc-plattform` (any other path can also choosen)
-
-## Firewall Requirements
-
-### Github Repository
-- github.com, HTTPS, 443/tcp
-
-### Docker Images
-- io.docker.com, HTTPS, 443/tcp
-
-### For Intelligence sources
-It depends on what you onboard to OpenCTI, MISP, Cortex, ...
-
-## Configuration Requirements
-- For Elasticsearch:
-  - https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#_set_vm_max_map_count_to_at_least_262144
+see [Docs](docs/Home.md)
 
 # Usage
-
-## Main plattform
-1. Copy .env.sample: `cp .env.sample .env`
-2. Modify .env file to your requirements: `vi .env`
-3. Pull images: `docker-compose pull` or `make install`
-4. Start main plattform: `docker-compose up -d` or `make start`
-
-## Optional: Watcher
-To start watcher: `make install-watcher` or:
-```
-cd watcher
-make download
-make start
-```
-You can also start it manually please checkout the [makefile](/watcher/Makefile) for this.
-
-## Optional: OpenCTI
-To start OpenCTI: `make install-opencti` or:
-```
-cd opencti
-make download
-make start
-```
-You can also start it manually please checkout the [makefile](/opencti/Makefile) for this.
-
+see [Docs](docs/Home.md)
 
 # Contribution
 - Everyone is allowed to contribute to this project
 - All communication and discussions should be made at the moment during Github issues
+
 # Credits
 This project thanks all contributors of the projects listed below, without them this project would never be possible:
 - Case Management
