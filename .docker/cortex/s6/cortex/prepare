@@ -1,7 +1,5 @@
 #!/usr/bin/with-contenv bash
-set -x
 source /default_vars.sh
-printenv|sort
 
 USERNAME=${USERNAME:-"cortex"}
 [ -z "$GID" ] && GID=1000
@@ -31,7 +29,6 @@ fi
 # Setup application.conf
 if [ "$CONFIG" -eq 1 ]
 then
-set -xv
 # 	#################
 #     if test $CONFIG_ES = 1
 # 	then
@@ -74,7 +71,9 @@ set -xv
 # 	[ -z $(grep "responder.urls" "$CONFIG_FILE") ] && echo responder.urls=\[$(join_urls ${RESPONDER_URLS[@]})\] >> "$CONFIG_FILE"
 
 
-	if [ "$AUTH" == "ad" ]
+	sed -i '/auth.provider=/d' "$CONFIG_FILE"
+	sed -i '/auth.ldap.serverNames=/d' "$CONFIG_FILE"
+	if [ "$AUTH" == *"ad"* ]
 	then
 		{
 			echo "auth.provider=[$AUTH, local]";
@@ -84,7 +83,7 @@ set -xv
 	then
 		{
 			echo "auth.provider=[$AUTH, local]";
-			echo "auth.ldap.serverNames = [$AUTH_LDAP_SERVERNAMES]";
+			echo "auth.ldap.serverNames=[$AUTH_LDAP_SERVERNAMES]";
 
 		}	>> "$CONFIG_FILE"
 	else
@@ -96,9 +95,9 @@ set -xv
 fi
 
 
-echo "config file $CONFIG_FILE is:"
-echo "##################"
-cat "$CONFIG_FILE"
-echo "##################"
+# echo "config file $CONFIG_FILE is:"
+# echo "##################"
+# #cat "$CONFIG_FILE"
+# echo "##################"
 
 

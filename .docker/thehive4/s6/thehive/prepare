@@ -1,10 +1,10 @@
 #!/usr/bin/with-contenv bash
+source /default_vars.sh
 
 [ -z "$USERNAME" ] && USERNAME="thehive"
 [ -z "$GID" ] && GID=1000
 [ -z "$UID" ] && UID=1000
 CONFIG=${CONFIG:-"1"}
-export CONFIG_FILE=${CONFIG_FILE:-"/etc/thehive/application.conf"}
 
 # Check if user must be created
 if [ -n "$(id "$USERNAME" > /dev/null)" ]
@@ -17,8 +17,10 @@ chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /opt/thehive*
 chgrp "$USERNAME" "$CONFIG_FILE"
 chmod 640 "$CONFIG_FILE"
 
-# if [ "$CONFIG" == 1 ]
-# then
-# [ -z "$(grep "play.http.secret.key" "$CONFIG_FILE")" ] && echo "play.http.secret.key=\"$SECRET\"" >> "$CONFIG_FILE"
-# [ -z "$(grep "db.janusgraph.storage.hostname" "$CONFIG_FILE")" ] && echo "db.janusgraph.storage.hostname = [\"$CASSANDRA_DB_HOSTNAME\"]" >> "$CONFIG_FILE"
-# fi
+if [ "$CONFIG" -eq 1 ]
+then
+
+	sed -i "s/hosts:.*/hosts: [${AUTH_AD_HOSTS}]/g" "$CONFIG_FILE"
+    #sed -i "s/\${??AUTH_LDAP_HOSTS}/${?AUTH_LDAP_HOSTS}/g" "$CONFIG_FILE"
+
+fi

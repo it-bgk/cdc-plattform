@@ -263,6 +263,7 @@ services:
             - DOCKER_HOST=${CORTEX_DOCKER_HOST}
             - DOCKER_GID=${CORTEX_DOCKER_GID} # Set the correct local docker group GID
             - JOB_DIRECTORY=${CORTEX_JOB_DIRECTORY}
+            - DEBUG=${CORTEX_DEBUG}
             # - JAVA_OPTS=-Djavax.net.ssl.trustStore=/etc/thehive/truststore/truststore.jks
         networks:
             egress:
@@ -298,20 +299,19 @@ services:
         - cassandra
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
-            - TH_CORTEX_KEY=${TH_CORTEX_KEY}
-            - TH_CORTEX_URL=${TH_CORTEX_URL}
-            #- TH_CORTEX_PORT=9001
+            - CORTEX_KEY=${TH_CORTEX_KEY}
+            - CORTEX_URL=${TH_CORTEX_URL}
             - SECRET=${TH_SECRET}
-            - TH_ES_HOSTNAME=${TH_ES_HOSTNAME}
-            - TH_MISP_URL=${TH_MISP_URL}
-            - TH_MISP_KEY=${TH_MISP_KEY}
-            - TH_MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
+            - MISP_URL=${TH_MISP_URL}
+            - MISP_KEY=${TH_MISP_KEY}
+            - MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
             - AUTH_AD_WINDOMAIN=${TH_AUTH_AD_WINDOMAIN}
             - AUTH_AD_DNSDOMAIN=${TH_AUTH_AD_DNSDOMAIN}
             - AUTH_AD_USESSL=${TH_AUTH_AD_USESSL:-false}
             - AUTH_AD_HOSTS=${TH_AUTH_AD_HOSTS}
             - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
             - AUTH_DEFAULTUSERDOMAIN=${TH_AUTH_DEFAULTUSERDOMAIN}
+            - DEBUG=${TH_DEBUG}
         expose:
             - 9000
         labels:
@@ -333,46 +333,46 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    misp-internal:
-        image: itbgk/misp
-        restart: unless-stopped
-        container_name: misp-internal
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_internal_data:/var/www/MISP
-        env_file: env/misp-internal.env
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    misp-public:
-        image: itbgk/misp
-        restart: unless-stopped
-        container_name: misp-public
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_public_data:/var/www/MISP
-        env_file: env/misp-public.env
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"
-    misp-modules:
-        image: itbgk/misp-modules
-        restart: unless-stopped
-        container_name: misp-modules
-        networks:
-            egress:
-            traefik_internal:
-        expose:
-            - 6666
-        env_file: env/misp-modules.env
+    # misp-internal:
+    #     image: itbgk/misp
+    #     restart: unless-stopped
+    #     container_name: misp-internal
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_internal_data:/var/www/MISP
+    #     env_file: env/misp-internal.env
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    # misp-public:
+    #     image: itbgk/misp
+    #     restart: unless-stopped
+    #     container_name: misp-public
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_public_data:/var/www/MISP
+    #     env_file: env/misp-public.env
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    # misp-modules:
+    #     image: itbgk/misp-modules
+    #     restart: unless-stopped
+    #     container_name: misp-modules
+    #     networks:
+    #         egress:
+    #         traefik_internal:
+    #     expose:
+    #         - 6666
+    #     env_file: env/misp-modules.env
     misp-redis:
         image: redis
         restart: unless-stopped

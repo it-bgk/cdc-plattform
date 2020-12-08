@@ -15,11 +15,16 @@ start-opencti:
 
 # DEV only
 update-toc:
-	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc --replace README.md
+	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc README.md --skip-headers 2 --replace
 
 ####
 init_es:
 	./.helper/backup.sh init elasticsearch
+
+backup:
+	backup_es
+	backup_cassandra
+	backup_minemeld
 
 backup_es:
 	./.helper/backup.sh backup elasticsearch
