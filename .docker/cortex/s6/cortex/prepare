@@ -73,13 +73,13 @@ then
 
 	sed -i '/auth.provider=/d' "$CONFIG_FILE"
 	sed -i '/auth.ldap.serverNames=/d' "$CONFIG_FILE"
-	if [ "$AUTH" == *"ad"* ]
+	if [[ "$AUTH" == *"ad"* ]]
 	then
 		{
 			echo "auth.provider=[$AUTH, local]";
 			echo "auth.ad.serverNames=[$AUTH_AD_SERVERNAMES]";
 		}	>> "$CONFIG_FILE"
-	elif [ "$AUTH" == "ldap" ]
+	elif [[ "$AUTH" == *"ldap"* ]]
 	then
 		{
 			echo "auth.provider=[$AUTH, local]";
