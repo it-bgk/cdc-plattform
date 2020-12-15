@@ -10,6 +10,8 @@ update:
 	cd ${FOLDER}; git pull
 	make start
 start:
+	cd ..; docker-compose up -d traefik
 	cd ${FOLDER}; docker-compose --compatibility up -d
+	docker logs -f opencti_opencti_1
 stop:
 	cd ${FOLDER}; docker-compose --compatibility down
