@@ -1,6 +1,6 @@
 .env
-watcher/Watcher
-opencti/docker
+watcher/watcher
+opencti/opencti
 /BACKUP/**
 /DATA/*
 !/DATA/ssl

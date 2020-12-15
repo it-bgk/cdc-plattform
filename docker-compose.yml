@@ -333,36 +333,42 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    # misp-internal:
-    #     image: itbgk/misp
-    #     restart: unless-stopped
-    #     container_name: misp-internal
-    #     networks:
-    #         traefik_internal:
-    #         egress:
-    #     volumes:
-    #         - misp_internal_data:/var/www/MISP
-    #     env_file: env/misp-internal.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    # misp-public:
-    #     image: itbgk/misp
-    #     restart: unless-stopped
-    #     container_name: misp-public
-    #     networks:
-    #         traefik_internal:
-    #         egress:
-    #     volumes:
-    #         - misp_public_data:/var/www/MISP
-    #     env_file: env/misp-public.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    misp-internal:
+        image: itbgk/misp:2.4.134
+        restart: unless-stopped
+        container_name: misp-internal
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_internal_data:/var/www/MISP
+        env_file: env/misp-internal.env
+        depends_on: 
+        - traefik
+        - misp-redis
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    misp-public:
+        image: itbgk/misp:2.4.134
+        restart: unless-stopped
+        container_name: misp-public
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_public_data:/var/www/MISP
+        env_file: env/misp-public.env
+        depends_on: 
+        - traefik
+        - misp-redis
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"
     # misp-modules:
     #     image: itbgk/misp-modules
     #     restart: unless-stopped
@@ -408,9 +414,11 @@ services:
         restart: unless-stopped
         container_name: nginx-static-files
         volumes:
-        - ./DATA/nginx-static-files/:/opt/nginx-static-files:ro
+        - ./DATA/nginx-static-files/:/var/www/html/:ro
         networks: 
             traefik_internal:
+        depends_on: 
+        - traefik
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.nginx-static-files.rule=Host(`s.${FQDN}`)"
