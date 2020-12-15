@@ -408,9 +408,11 @@ services:
         restart: unless-stopped
         container_name: nginx-static-files
         volumes:
-        - ./DATA/nginx-static-files/:/opt/nginx-static-files:ro
+        - ./DATA/nginx-static-files/:/var/www/html/:ro
         networks: 
             traefik_internal:
+        depends_on: 
+        - traefik
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.nginx-static-files.rule=Host(`s.${FQDN}`)"
