@@ -1,6 +1,21 @@
 version: "3.3"
 networks:
-    ir_internal:
+    traefik_internal:
         external: true
         
 services:
+    watcher:
+        networks: 
+            traefik_internal:
+        ports:
+        - 127.0.0.1:60000:9002
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.watcher.rule=Host(`watcher.${FQDN}`)"
+            - "traefik.http.services.watcher.loadbalancer.server.port=9002"
+    rss-bridge:
+        volumes:
+            - $PWD/../../DATA/watcher/rss-bridge/whitelist.txt:/app/whitelist.txt
+    searx:
+        volumes:
+        - $PWD/../../DATA/watcher/searx/searx:/etc/searx:rw
