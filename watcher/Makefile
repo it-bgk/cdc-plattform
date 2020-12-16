@@ -2,8 +2,8 @@ FOLDER:=watcher
 install:
 	git clone https://github.com/Felix83000/Watcher.git ${FOLDER}
 	mv ${FOLDER}/.env ${FOLDER}/.env.orig
-	ln -s ${PWD}/../.env ${FOLDER}/.env
-	ln -s ${PWD}/docker-compose.override.yml ${FOLDER}/
+	ln -s $${PWD}/../.env ${FOLDER}/.env
+	ln -s $${PWD}/docker-compose.override.yml ${FOLDER}/
 clean:
 	make stop
 	rm -Rf ${FOLDER}
