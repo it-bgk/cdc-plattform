@@ -40,6 +40,7 @@ variables:
   ELASTICSEARCH_CONTAINER_RELEASE_IMAGE: $HUBDOCKERCOM_ORG/elasticsearch-oss
 
 before_script:
+  - apk add --no-cache curl
   # Login to Gitlab Docker Registry
   - echo "$CI_JOB_TOKEN" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   # Save Version to file (will be read by api.py)
@@ -159,6 +160,8 @@ build-release-misp-modules:
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG
   only:
     - master
+  allow_failure: true
+
 
 retag-release-elasticsearch:
   stage: release

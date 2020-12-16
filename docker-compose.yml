@@ -19,6 +19,10 @@ volumes:
         name: misp_internal_data
     misp_public_data:
         name: misp_public_data
+    misp-internal-db_data:
+        name: misp-internal-db_data
+    misp-public-db_data:
+        name: misp-public-db_data
 
 networks:
     egress:
@@ -46,23 +50,23 @@ services:
         container_name: watchtower
         restart: unless-stopped
         environment: 
-        - WATCHTOWER_CLEANUP=true
-        - WATCHTOWER_POLL_INTERVAL=300
-        - WATCHTOWER_MONITOR_ONLY=false
-        - WATCHTOWER_SCHEDULE=0 0 4 * * *
-        - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
-        #
-        - WATCHTOWER_NOTIFICATIONS=email
-            # in seconds:
-        - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
-            # to skip cert verify
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
-        - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
-        - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+            - WATCHTOWER_CLEANUP=true
+            - WATCHTOWER_POLL_INTERVAL=300
+            - WATCHTOWER_MONITOR_ONLY=false
+            - WATCHTOWER_SCHEDULE=0 0 4 * * *
+            - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
+            #
+            - WATCHTOWER_NOTIFICATIONS=email
+                # in seconds:
+            - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+                # to skip cert verify
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
+            - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+            - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
         networks:
             egress:
         volumes:
@@ -75,12 +79,12 @@ services:
         restart: unless-stopped
         container_name: traefik
         volumes:
-        - acme_data:/etc/traefik/acme
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-        - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
-        - ${SSL_CA}:/ssl/ca:ro
-        - ${SSL_CERT}:/ssl/cert:ro
-        - ${SSL_KEY}:/ssl/key:ro
+            - acme_data:/etc/traefik/acme
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
+            - ${SSL_CA}:/ssl/ca:ro
+            - ${SSL_CERT}:/ssl/cert:ro
+            - ${SSL_KEY}:/ssl/key:ro
         environment: 
             # Entrypoint HTTP
             ## Enable entrypoint
@@ -138,25 +142,24 @@ services:
         - "traefik.http.routers.traefik.middlewares=auth"
         - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
     elasticsearch:
-        #image: amazon/opendistro-for-elasticsearch:latest
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
         container_name: elasticsearch
         networks:
             traefik_internal:
         environment: 
-        - node.name=elasticsearch
-        - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-        - "http.host=0.0.0.0"
-        - "discovery.type=single-node"
-        - "transport.host=0.0.0.0"
-        - script.allowed_types=inline
-        - thread_pool.search.queue_size=100000
-        - thread_pool.write.queue_size=10000
-        - path.repo=/backup
-        - cluster.name=hive
-        #- opendistro_security.ssl.http.enabled=false  
+            - node.name=elasticsearch
+            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+            - "http.host=0.0.0.0"
+            - "discovery.type=single-node"
+            - "transport.host=0.0.0.0"
+            - script.allowed_types=inline
+            - thread_pool.search.queue_size=100000
+            - thread_pool.write.queue_size=10000
+            - path.repo=/backup
+            - cluster.name=hive
+            #- opendistro_security.ssl.http.enabled=false  
         expose:
             - 9200 # HTTP
         volumes:
@@ -277,10 +280,8 @@ services:
         mem_limit: 8G
         labels:
             - "traefik.enable=true"
-            ### SSL
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
-            - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
         image: itbgk/thehive4:4.0.2-1
         build:
@@ -293,7 +294,7 @@ services:
             egress:
             traefik_internal:
         #volumes:
-        #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
+            #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
         depends_on:
         - traefik
         - cassandra
@@ -317,7 +318,6 @@ services:
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=https"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
     cassandra:
         image: cassandra:latest
@@ -333,36 +333,95 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    # misp-internal:
-    #     image: itbgk/misp
-    #     restart: unless-stopped
-    #     container_name: misp-internal
-    #     networks:
-    #         traefik_internal:
-    #         egress:
-    #     volumes:
-    #         - misp_internal_data:/var/www/MISP
-    #     env_file: env/misp-internal.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    # misp-public:
-    #     image: itbgk/misp
-    #     restart: unless-stopped
-    #     container_name: misp-public
-    #     networks:
-    #         traefik_internal:
-    #         egress:
-    #     volumes:
-    #         - misp_public_data:/var/www/MISP
-    #     env_file: env/misp-public.env
-    #     labels:
-    #         - "traefik.enable=true"
-    #         - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
-    #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    misp-internal:
+        image: itbgk/misp:2.4.134
+        restart: unless-stopped
+        container_name: misp-internal
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_internal_data:/var/www/MISP
+            - /dev/urandom:/dev/random
+            #- ${MISP_INTERNAL_DATA_DIR}/web:/var/www/MISP
+        environment: 
+            - MYSQL_HOST=${MISP_INTERNAL_MYSQL_HOST}
+            - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+            - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+            - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+            - MISP_ADMIN_EMAIL=${MISP_INTERNAL_ADMIN_EMAIL}
+            - MISP_ADMIN_PASSPHRASE=${MISP_INTERNAL_ADMIN_PASSPHRASE}
+            - MISP_BASEURL=${MISP_INTERNAL_BASEURL}
+            - POSTFIX_RELAY_HOST=${MISP_INTERNAL_POSTFIX_RELAY_HOST}
+            - TIMEZONE=${MISP_INTERNAL_TIMEZONE}
+            - DATA_DIR=${MISP_INTERNAL_DATA_DIR}
+        depends_on: 
+            - traefik
+            - misp-redis
+            - misp-internal-db
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    misp-internal-db:
+        container_name: misp-internal-db
+        image: mariadb
+        restart: unless-stopped
+        networks:
+            traefik_internal:
+        volumes:
+            #- ${DATA_DIR}/db:/var/lib/mysql
+            - misp-internal-db_data:/var/lib/mysql
+        environment:
+            - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+            - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+            - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${MISP_INTERNAL_MYSQL_ROOT_PASSWORD}
+    misp-public:
+        image: itbgk/misp:2.4.134
+        restart: unless-stopped
+        container_name: misp-public
+        networks:
+            traefik_internal:
+            egress:
+        volumes:
+            - misp_public_data:/var/www/MISP
+            - /dev/urandom:/dev/random
+            #- ${MISP_PUBLIC_DATA_DIR}/web:/var/www/MISP
+        environment: 
+            - MYSQL_HOST=${MISP_PUBLIC_MYSQL_HOST}
+            - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+            - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+            - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+            - MISP_ADMIN_EMAIL=${MISP_PUBLIC_ADMIN_EMAIL}
+            - MISP_ADMIN_PASSPHRASE=${MISP_PUBLIC_ADMIN_PASSPHRASE}
+            - MISP_BASEURL=${MISP_PUBLIC_BASEURL}
+            - POSTFIX_RELAY_HOST=${MISP_PUBLIC_POSTFIX_RELAY_HOST}
+            - TIMEZONE=${MISP_PUBLIC_TIMEZONE}
+            - DATA_DIR=${MISP_PUBLIC_DATA_DIR}
+        depends_on: 
+        - traefik
+        - misp-redis
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.thehive.rule=Host(`mp.${FQDN}`)"
+            - "traefik.http.routers.thehive.entrypoints=http"
+            - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    misp-public-db:
+        container_name: misp-public-db
+        image: mariadb
+        restart: unless-stopped
+        networks:
+            traefik_internal:
+        volumes:
+            #- ${MISP_PUBLIC_DATA_DIR}/db:/var/lib/mysql
+            - misp-public-db_data:/var/lib/mysql
+        environment:
+            - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+            - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+            - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+            - MYSQL_ROOT_PASSWORD=${MISP_PUBLIC_MYSQL_ROOT_PASSWORD}
     # misp-modules:
     #     image: itbgk/misp-modules
     #     restart: unless-stopped
