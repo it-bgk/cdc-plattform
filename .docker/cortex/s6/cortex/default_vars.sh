@@ -28,4 +28,7 @@ CONFIG=${CONFIG:-"1"}
 # RESPONDER_PATH=${RESPONDER_PATH:-"/etc/cortex/responders.json"}
 # RESPONDER_URLS=${RESPONDER_URLS:-"()"}
 SECRET="${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}"
+USERNAME=${USERNAME:-"cortex"}
+GID=${GID:-1000}
+UID=${UID:-1000}
 

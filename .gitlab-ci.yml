@@ -124,7 +124,7 @@ build-release-thehive:
 build-release-misp:
   stage: release
   script:
-    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml misp-modules TAG
+    - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml misp TAG
     - source .vars
     # Login to hub.docker.com
     - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
@@ -132,9 +132,8 @@ build-release-misp:
     - if [ "$TAG" == "" ]; then TAG=latest; fi
     # Add MISP-modules code
     - git clone https://github.com/MISP/misp-docker.git
-    - cd misp-docker/web
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
-    # Docker build, push
+    - cd misp-docker/web
     - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$TAG
