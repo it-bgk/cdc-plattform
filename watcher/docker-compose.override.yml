@@ -9,13 +9,24 @@ services:
             traefik_internal:
         ports:
         - 127.0.0.1:60000:9002
+        environment: 
+            - CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+        volumes: 
+            - ${SSL_CA_BUNDLE}:/etc/ssl/certs/ca-certificates.crt:ro
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.watcher.rule=Host(`watcher.${FQDN}`)"
+            - "traefik.http.routers.watcher.entrypoints=https"
             - "traefik.http.services.watcher.loadbalancer.server.port=9002"
     rss-bridge:
+        environment: 
+            - CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
         volumes:
-            - $PWD/../../DATA/watcher/rss-bridge/whitelist.txt:/app/whitelist.txt
+            - ${BASE_FOLDER}/../../DATA/watcher/rss-bridge/whitelist.txt:/app/whitelist.txt
+            - ${SSL_CA_BUNDLE}:/etc/ssl/certs/ca-certificates.crt:ro
     searx:
+        environment: 
+            - CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
         volumes:
-        - $PWD/../../DATA/watcher/searx/searx:/etc/searx:rw
+            - ${BASE_FOLDER}/../../DATA/watcher/searx/searx:/etc/searx:rw
+            - ${SSL_CA_BUNDLE}:/etc/ssl/certs/ca-certificates.crt:ro
