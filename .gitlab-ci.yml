@@ -101,10 +101,10 @@ build-release-cortex:
   stage: release
   script:
     - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml cortex TAG
-    - source .vars
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
+    - source .vars 
     - docker pull $CORTEX_CONTAINER_TEST_IMAGE
     - docker tag $CORTEX_CONTAINER_TEST_IMAGE $CORTEX_CONTAINER_RELEASE_IMAGE:$TAG
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push $CORTEX_CONTAINER_RELEASE_IMAGE:$TAG
   only:
     - master
@@ -113,10 +113,10 @@ build-release-thehive:
   stage: release
   script:
     - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml thehive4 TAG
-    - source .vars
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
+    - source .vars 
     - docker pull $THEHIVE_CONTAINER_TEST_IMAGE
     - docker tag $THEHIVE_CONTAINER_TEST_IMAGE $THEHIVE_CONTAINER_RELEASE_IMAGE:$TAG
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push $THEHIVE_CONTAINER_RELEASE_IMAGE:$TAG    
   only:
     - master
@@ -126,8 +126,6 @@ build-release-misp:
   script:
     - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml misp TAG
     - source .vars
-    # Login to hub.docker.com
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     # If tag empty use TAG=latest
     - if [ "$TAG" == "" ]; then TAG=latest; fi
     # Add MISP-modules code
@@ -135,6 +133,8 @@ build-release-misp:
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     - cd misp-docker/web
     - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
+    - docker image ls
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$TAG
   # only:
@@ -145,8 +145,6 @@ build-release-misp-modules:
   script:
     - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml misp-modules TAG
     - source .vars
-    # Login to hub.docker.com
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     # If tag empty use TAG=latest
     - if [ "$TAG" == "" ]; then TAG=latest; fi
     # Add MISP-modules code
@@ -155,6 +153,8 @@ build-release-misp-modules:
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     # Docker build, push
     - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
+    - docker image ls
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG
   # only:
@@ -166,10 +166,10 @@ retag-release-elasticsearch:
   stage: release
   script:
     - /helper_scripts/add_tag_2_.vars.sh docker-compose.yml elasticsearch-oss TAG
-    - source .vars
-    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin 
+    - source .vars 
     - docker pull docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG}
     - docker tag docker.elastic.co/elasticsearch/elasticsearch-oss:${TAG} itbgk/elasticsearch-oss:${TAG}
+    - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push itbgk/elasticsearch-oss:${TAG}
   only:
     - master
