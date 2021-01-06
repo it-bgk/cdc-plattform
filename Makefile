@@ -12,11 +12,12 @@ start-watcher:
 	make -C watcher start
 start-opencti:
 	make -C opencti start
-
+update-repo:
+	./.helper/update.sh
+####
 # DEV only
 update-toc:
 	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc README.md --skip-headers 2 --replace
-
 ####
 init_es:
 	./.helper/backup.sh init elasticsearch
