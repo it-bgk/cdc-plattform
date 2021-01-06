@@ -137,8 +137,8 @@ build-release-misp:
     - docker build --pull -t $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_CONTAINER_RELEASE_IMAGE:$TAG .
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_CONTAINER_RELEASE_IMAGE:$TAG
-  only:
-    - master
+  # only:
+  #   - master
 
 build-release-misp-modules:
   stage: release
@@ -157,9 +157,9 @@ build-release-misp-modules:
     - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG
-  only:
-    - master
-  allow_failure: true
+  # only:
+    # - master
+  # allow_failure: true
 
 
 retag-release-elasticsearch:
