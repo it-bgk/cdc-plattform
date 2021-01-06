@@ -23,6 +23,7 @@ More information on https://github.com/PaloAltoNetworks/minemeld/wiki/List-of-Su
 - https://live.paloaltonetworks.com/t5/minemeld-articles/minemeld-to-extract-indicators-from-generic-api/ta-p/218757
 - https://live.paloaltonetworks.com/t5/minemeld-articles/creating-whitelists/ta-p/72250
 - https://live.paloaltonetworks.com/t5/minemeld-articles/uploading-list-of-indicators-to-minemeld/ta-p/162242
+- https://live.paloaltonetworks.com/t5/minemeld-articles/configuring-nodes/ta-p/77185
 
 ### Splunk Integration
 - https://scubarda.com/2017/09/12/minemeld-threat-intelligence-automation-analyze-received-ioc-with-splunk-4/
