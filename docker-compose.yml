@@ -82,7 +82,7 @@ services:
             - acme_data:/etc/traefik/acme
             - /var/run/docker.sock:/var/run/docker.sock:ro
             - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
-            - ${SSL_CA}:/ssl/ca:ro
+            - ${SSL_ROOT_CA}:/ssl/ca:ro
             - ${SSL_CERT}:/ssl/cert:ro
             - ${SSL_KEY}:/ssl/key:ro
         environment: 
@@ -175,64 +175,6 @@ services:
                 soft: 65536
                 hard: 65536
         mem_limit: 6G
-    # kibana:
-        #     image: amazon/opendistro-for-elasticsearch-kibana:latest
-        #     container_name: kibana
-        #     # ports:
-        #     #     - 5601:5601
-        #     depends_on: 
-        #         - es-01
-        #     expose:
-        #         - "5601"
-        #     # environment:
-        #     #     - ELASTICSEARCH_URL=https://es-01:9200
-        #     #     - ELASTICSEARCH_HOSTS=https://es-01:9200
-        #         # - opendistro_security.ssl.http.enabled=false  
-        #     networks:
-        #         - traefik_internal
-        #     volumes:
-        #         - es_config:/es_config:ro
-        #         - ./DATA/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
-        #     runtime: runc
-        #     labels:
-        #         - "traefik.enable=true"
-        #         - "traefik.http.routers.kibana.rule=PathPrefix(`/kibana`)" #||PathPrefix(`/app/kibana`)||PathPrefix(`/login`)||PathPrefix(`/bundles`)"
-        #         - "traefik.http.services.kibana.loadbalancer.server.port=5601"
-    # cerebro:
-        # image: lmenezes/cerebro
-        # restart: unless-stopped
-        # container_name: cerebro
-        # volumes:
-        #     - "./DATA/cerebro/application.conf:/opt/cerebro/conf/application.conf"
-        # environment: 
-        #     - SECRET_KEY=${CEREBRO_SECRET}
-        #     - BASE_PATH=${CEREBRO_BASE_PATH}
-        #     - ES_URL=${CEREBRO_ES_URL}
-        #     - ES_AUTH_USER=${CEREBRO_ES_AUTH_USER}
-        #     - ES_AUTH_PW=${CEREBRO_ES_AUTH_PW}
-        #     - AUTH_TYPE=${CEREBRO_AUTH_TYPE}
-        #     - BASIC_AUTH_USER=${CEREBRO_BASIC_AUTH_USER}
-        #     - BASIC_AUTH_PWD=${CEREBRO_BASIC_AUTH_PW}
-        #     - LDAP_URL=${CEREBRO_LDAP_URL}
-        #     - LDAP_BASE_DN=${CEREBRO_LDAP_BASE_DN}
-        #     # Usually method should  be "simple" otherwise, set it to the SASL mechanisms
-        #     - LDAP_METHOD=simple
-        #     - LDAP_USER_TEMPLATE=${CEREBRO_LDAP_USER_TEMPLATE}
-        #     - LDAP_BIND_DN=${CEREBRO_LDAP_BIND_DN}
-        #     - LDAP_BIND_PWD=${CEREBRO_LDAP_BIND_PW}
-        #     - LDAP_GROUP_BASE_DN=${CEREBRO_LDAP_GROUP_BASE_DN}
-        #     - LDAP_USER_ATTR=${CEREBRO_LDAP_USER_ATTR}
-        #     - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
-        #     - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
-        # networks:
-        #     traefik_internal:
-        # depends_on: 
-        # - elasticsearch
-        # - traefik
-        # labels:
-        #     - "traefik.enable=true"
-        #     - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
-        #     - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
     cortex:
         image: itbgk/cortex:3.1.0-1
         build:
@@ -283,11 +225,11 @@ services:
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
     thehive:
-        image: itbgk/thehive4:4.0.2-1
+        image: itbgk/thehive4:4.0.3-1
         build:
             context: .docker/thehive4
             args: 
-                VERSION: 4.0.2-1
+                VERSION: 4.0.3-1
         restart: unless-stopped
         container_name: thehive
         networks:
@@ -426,12 +368,15 @@ services:
     #     image: itbgk/misp-modules
     #     restart: unless-stopped
     #     container_name: misp-modules
+    #     volumes: 
+    #         - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/sites/ca:ro
     #     networks:
     #         egress:
     #         traefik_internal:
     #     expose:
     #         - 6666
     #     env_file: env/misp-modules.env
+    ###
     misp-redis:
         image: redis
         restart: unless-stopped
@@ -447,9 +392,12 @@ services:
         container_name: minemeld
         restart: unless-stopped
         tmpfs: /run
+        environment: 
+            - REQUESTS_CA_BUNDLE=/opt/minemeld/local/certs/cacert.pem
         volumes: 
             - minemeld_local:/opt/minemeld/local
-            - minemeld_logs:/opt/minemeld/log 
+            - minemeld_logs:/opt/minemeld/log
+            - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/sites/custom-root-ca:ro
         networks:
             egress:
             traefik_internal:
@@ -467,7 +415,7 @@ services:
         restart: unless-stopped
         container_name: nginx-static-files
         volumes:
-        - ./DATA/nginx-static-files/:/var/www/html/:ro
+        - ./DATA/nginx-static-files/:/usr/share/nginx/html/:ro
         networks: 
             traefik_internal:
         depends_on: 
