@@ -152,7 +152,7 @@ build-release-misp-modules:
     - cd misp-modules
     - if [ "$TAG" != "latest" ]; then git checkout v${TAG}; fi
     # Docker build, push
-    - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG docker/
+    - docker build --pull -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD) -t $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$TAG -f docker/Dockerfile .
     - docker image ls
     - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
     - docker push $MISP_MODULES_CONTAINER_RELEASE_IMAGE:$(git rev-parse HEAD)
