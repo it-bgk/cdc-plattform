@@ -397,6 +397,7 @@ services:
         volumes: 
             - minemeld_local:/opt/minemeld/local
             - minemeld_logs:/opt/minemeld/log
+            # https://live.paloaltonetworks.com/t5/minemeld-discussions/minemeld-outbound-calls-impacted-by-ssl-interception/m-p/133152#M642
             - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/sites/custom-root-ca:ro
         networks:
             egress:
