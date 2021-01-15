@@ -189,6 +189,7 @@ services:
             - es_config:/es_config:ro
             - ./DATA/cortex/nslr:/opt/cortex/nslr:ro
             - /tmp/cortex-jobs:/tmp/cortex-jobs
+            - ${SSL_ROOT_CA}:/job/input/cacerts:ro
         environment: 
             - SECRET=${CORTEX_SECRET}
             - AUTH=${CORTEX_AUTH}
