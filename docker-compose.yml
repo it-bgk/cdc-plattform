@@ -275,95 +275,95 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    misp-internal:
-        image: itbgk/misp:2.4.134
-        restart: unless-stopped
-        container_name: misp-internal
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_internal_data:/var/www/MISP
-            - /dev/urandom:/dev/random
-            #- ${MISP_INTERNAL_DATA_DIR}/web:/var/www/MISP
-        environment: 
-            - MYSQL_HOST=${MISP_INTERNAL_MYSQL_HOST}
-            - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
-            - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
-            - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
-            - MISP_ADMIN_EMAIL=${MISP_INTERNAL_ADMIN_EMAIL}
-            - MISP_ADMIN_PASSPHRASE=${MISP_INTERNAL_ADMIN_PASSPHRASE}
-            - MISP_BASEURL=${MISP_INTERNAL_BASEURL}
-            - POSTFIX_RELAY_HOST=${MISP_INTERNAL_POSTFIX_RELAY_HOST}
-            - TIMEZONE=${MISP_INTERNAL_TIMEZONE}
-            - DATA_DIR=${MISP_INTERNAL_DATA_DIR}
-        depends_on: 
-            - traefik
-            - misp-redis
-            - misp-internal-db
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    misp-internal-db:
-        container_name: misp-internal-db
-        image: mariadb
-        restart: unless-stopped
-        networks:
-            traefik_internal:
-        volumes:
-            #- ${DATA_DIR}/db:/var/lib/mysql
-            - misp-internal-db_data:/var/lib/mysql
-        environment:
-            - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
-            - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
-            - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
-            - MYSQL_ROOT_PASSWORD=${MISP_INTERNAL_MYSQL_ROOT_PASSWORD}
-    misp-public:
-        image: itbgk/misp:2.4.134
-        restart: unless-stopped
-        container_name: misp-public
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_public_data:/var/www/MISP
-            - /dev/urandom:/dev/random
-            #- ${MISP_PUBLIC_DATA_DIR}/web:/var/www/MISP
-        environment: 
-            - MYSQL_HOST=${MISP_PUBLIC_MYSQL_HOST}
-            - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
-            - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
-            - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
-            - MISP_ADMIN_EMAIL=${MISP_PUBLIC_ADMIN_EMAIL}
-            - MISP_ADMIN_PASSPHRASE=${MISP_PUBLIC_ADMIN_PASSPHRASE}
-            - MISP_BASEURL=${MISP_PUBLIC_BASEURL}
-            - POSTFIX_RELAY_HOST=${MISP_PUBLIC_POSTFIX_RELAY_HOST}
-            - TIMEZONE=${MISP_PUBLIC_TIMEZONE}
-            - DATA_DIR=${MISP_PUBLIC_DATA_DIR}
-        depends_on: 
-        - traefik
-        - misp-redis
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`mp.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"
-    misp-public-db:
-        container_name: misp-public-db
-        image: mariadb
-        restart: unless-stopped
-        networks:
-            traefik_internal:
-        volumes:
-            #- ${MISP_PUBLIC_DATA_DIR}/db:/var/lib/mysql
-            - misp-public-db_data:/var/lib/mysql
-        environment:
-            - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
-            - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
-            - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
-            - MYSQL_ROOT_PASSWORD=${MISP_PUBLIC_MYSQL_ROOT_PASSWORD}
+    # misp-internal:
+    #     image: itbgk/misp:2.4.134
+    #     restart: unless-stopped
+    #     container_name: misp-internal
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_internal_data:/var/www/MISP
+    #         - /dev/urandom:/dev/random
+    #         #- ${MISP_INTERNAL_DATA_DIR}/web:/var/www/MISP
+    #     environment: 
+    #         - MYSQL_HOST=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+    #         - MISP_ADMIN_EMAIL=${MISP_INTERNAL_ADMIN_EMAIL}
+    #         - MISP_ADMIN_PASSPHRASE=${MISP_INTERNAL_ADMIN_PASSPHRASE}
+    #         - MISP_BASEURL=${MISP_INTERNAL_BASEURL}
+    #         - POSTFIX_RELAY_HOST=${MISP_INTERNAL_POSTFIX_RELAY_HOST}
+    #         - TIMEZONE=${MISP_INTERNAL_TIMEZONE}
+    #         - DATA_DIR=${MISP_INTERNAL_DATA_DIR}
+    #     depends_on: 
+    #         - traefik
+    #         - misp-redis
+    #         - misp-internal-db
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    # misp-internal-db:
+    #     container_name: misp-internal-db
+    #     image: mariadb
+    #     restart: unless-stopped
+    #     networks:
+    #         traefik_internal:
+    #     volumes:
+    #         #- ${DATA_DIR}/db:/var/lib/mysql
+    #         - misp-internal-db_data:/var/lib/mysql
+    #     environment:
+    #         - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+    #         - MYSQL_ROOT_PASSWORD=${MISP_INTERNAL_MYSQL_ROOT_PASSWORD}
+    # misp-public:
+    #     image: itbgk/misp:2.4.134
+    #     restart: unless-stopped
+    #     container_name: misp-public
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_public_data:/var/www/MISP
+    #         - /dev/urandom:/dev/random
+    #         #- ${MISP_PUBLIC_DATA_DIR}/web:/var/www/MISP
+    #     environment: 
+    #         - MYSQL_HOST=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+    #         - MISP_ADMIN_EMAIL=${MISP_PUBLIC_ADMIN_EMAIL}
+    #         - MISP_ADMIN_PASSPHRASE=${MISP_PUBLIC_ADMIN_PASSPHRASE}
+    #         - MISP_BASEURL=${MISP_PUBLIC_BASEURL}
+    #         - POSTFIX_RELAY_HOST=${MISP_PUBLIC_POSTFIX_RELAY_HOST}
+    #         - TIMEZONE=${MISP_PUBLIC_TIMEZONE}
+    #         - DATA_DIR=${MISP_PUBLIC_DATA_DIR}
+    #     depends_on: 
+    #     - traefik
+    #     - misp-redis
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`mp.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    # misp-public-db:
+    #     container_name: misp-public-db
+    #     image: mariadb
+    #     restart: unless-stopped
+    #     networks:
+    #         traefik_internal:
+    #     volumes:
+    #         #- ${MISP_PUBLIC_DATA_DIR}/db:/var/lib/mysql
+    #         - misp-public-db_data:/var/lib/mysql
+    #     environment:
+    #         - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+    #         - MYSQL_ROOT_PASSWORD=${MISP_PUBLIC_MYSQL_ROOT_PASSWORD}
     # misp-modules:
     #     image: itbgk/misp-modules
     #     restart: unless-stopped
@@ -398,7 +398,7 @@ services:
             - minemeld_local:/opt/minemeld/local
             - minemeld_logs:/opt/minemeld/log
             # https://live.paloaltonetworks.com/t5/minemeld-discussions/minemeld-outbound-calls-impacted-by-ssl-interception/m-p/133152#M642
-            - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/sites/custom-root-ca:ro
+            - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/site/custom-root-ca:ro
         networks:
             egress:
             traefik_internal:
