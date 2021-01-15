@@ -224,6 +224,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
+            - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
         image: itbgk/thehive4:4.0.3-1
         build:
@@ -261,6 +262,7 @@ services:
             - "traefik.enable=true"
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
+            - "traefik.http.routers.thehive.entrypoints=https"
     cassandra:
         image: cassandra:latest
         restart: unless-stopped
