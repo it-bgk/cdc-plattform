@@ -176,20 +176,19 @@ services:
                 hard: 65536
         mem_limit: 6G
     cortex:
-        image: itbgk/cortex:3.1.0-1
+        image: itbgk/cortex:${CORTEX_VERSION}
         build:
             context: .docker/cortex
             args: 
-                VERSION: 3.1.0-1
+                VERSION: ${CORTEX_VERSION}
         restart: unless-stopped
         container_name: cortex
         volumes:
             #- ./DATA/cortex/application.conf:/etc/cortex/application.conf
             - /var/run/docker.sock:/var/run/docker.sock:ro # https://github.com/TheHive-Project/Cortex/issues/260#issuecomment-673292919
             - es_config:/es_config:ro
-            - ./DATA/cortex/nslr:/opt/cortex/nslr:ro
+            #- ./DATA/cortex/nslr:/opt/cortex/nslr:ro
             - /tmp/cortex-jobs:/tmp/cortex-jobs
-            - ${SSL_ROOT_CA}:/job/input/cacerts:ro
         environment: 
             - SECRET=${CORTEX_SECRET}
             - AUTH=${CORTEX_AUTH}
@@ -219,19 +218,18 @@ services:
         - traefik
         expose:
             - 9001
-        runtime: runc
-        mem_limit: 8G
+        mem_limit: 2G
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
             - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
-        image: itbgk/thehive4:4.0.3-1
+        image: itbgk/thehive4:${TH_VERSION}
         build:
             context: .docker/thehive4
             args: 
-                VERSION: 4.0.3-1
+                VERSION: ${TH_VERSION}
         restart: unless-stopped
         container_name: thehive
         networks:
@@ -244,21 +242,33 @@ services:
         - cassandra
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
-            - CORTEX_KEY=${TH_CORTEX_KEY}
-            - CORTEX_URL=${TH_CORTEX_URL}
-            - SECRET=${TH_SECRET}
-            - MISP_URL=${TH_MISP_URL}
-            - MISP_KEY=${TH_MISP_KEY}
-            - MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
             - AUTH_AD_WINDOMAIN=${TH_AUTH_AD_WINDOMAIN}
             - AUTH_AD_DNSDOMAIN=${TH_AUTH_AD_DNSDOMAIN}
             - AUTH_AD_USESSL=${TH_AUTH_AD_USESSL:-false}
             - AUTH_AD_HOSTS=${TH_AUTH_AD_HOSTS}
-            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
             - AUTH_DEFAULTUSERDOMAIN=${TH_AUTH_DEFAULTUSERDOMAIN}
+            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
+            - CORTEX_KEY=${TH_CORTEX_KEY}
+            - CORTEX_URL=${TH_CORTEX_URL:-"http://cortex:9001"}
             - DEBUG=${TH_DEBUG}
+            - MISP_INT_URL=${TH_MISP_INT_URL:-"http://misp-internal/"}
+            - MISP_INT_KEY=${TH_MISP_INT_KEY}
+            - MISP_INT_CASE_TEMPLATE=${TH_MISP_INT_CASE_TEMPLATE}
+            - MISP_INT_MAX_AGE=${TH_MISP_INT_MAX_AGE:-"7 days"}
+            - MISP_INT_EXCLUDE_ORGS=${TH_MISP_INT_EXCLUDE_ORGS}
+            - MISP_INT_EXCLUDE_TAGS=${TH_MISP_INT_EXCLUDE_TAGS}
+            - MISP_INT_WHITELIST_TAGS=${TH_MISP_INT_WHITELIST_TAGS}
+            - MISP_PUB_URL=${TH_MISP_PUB_URL:-"http://misp-public/"}
+            - MISP_PUB_KEY=${TH_MISP_PUB_KEY}
+            - MISP_PUB_CASE_TEMPLATE=${TH_MISP_PUB_CASE_TEMPLATE}
+            - MISP_PUB_MAX_AGE=${TH_MISP_PUB_MAX_AGE:-"7 days"}
+            - MISP_PUB_EXCLUDE_ORGS=${TH_MISP_PUB_EXCLUDE_ORGS}
+            - MISP_PUB_EXCLUDE_TAGS=${TH_MISP_PUB_EXCLUDE_TAGS}
+            - MISP_PUB_WHITELIST_TAGS=${TH_MISP_PUB_WHITELIST_TAGS}
+            - SECRET=${TH_SECRET}
         expose:
             - 9000
+        mem_limit: 2G
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
