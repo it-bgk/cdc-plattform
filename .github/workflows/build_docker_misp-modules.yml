@@ -6,24 +6,25 @@ on:
   schedule:
     - cron:  '0 0 * * 0'
     - cron:  '0 0 * * 4'
+  workflow_dispatch:
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
         with:
-          repository: 'MISP/misp-modules'
+          repository: 'MISP/misp-modules.git'
           #ref: 'master'
       - name: Output git ref sha1
         id: git-sha
-        run: git rev-parse HEAD
+        run: echo '::set-output name=GIT_REF::$(git rev-parse HEAD)'
       - name: Kaniko build
         uses: aevea/action-kaniko@master
         with:
           image: ${{ secrets.DOCKERHUB_ORG }}/misp-module
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tag: ${{ steps.git-sha.outputs }}
+          tag: ${{ steps.git-sha.outputs.GIT_REF }}
           extra_args: 
           #path: 
           build_file: docker/Dockerfile
