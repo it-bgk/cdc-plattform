@@ -38,7 +38,7 @@ jobs:
           tag_with_latest: true
           cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
-  latest:
+  older:
     strategy:
       matrix:
         VERSION: [2.4.135,2.4.134,2.4.133]
