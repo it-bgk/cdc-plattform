@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           #tag: ${{ steps.git-sha.outputs.GIT_REF }}
-          tag: ${{ EXT_GIT_REF_SHA1 }}
+          tag: ${{ env.EXT_GIT_REF_SHA1 }}
           #extra_args: 
           #path: 
           build_file: docker/Dockerfile
