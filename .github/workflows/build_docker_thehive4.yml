@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/thehive4
-  DOCKER_CONTEXT: ./.docker/thehive4
+  DOCKER_CONTEXT: .docker/thehive4
   DOCKER_DOCKERFILE: Dockerfile
 jobs:
   latest:
@@ -14,7 +14,7 @@ jobs:
         VERSION: [4.0.4]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Output git ref sha1
         id: git-sha
         run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -41,7 +41,7 @@ jobs:
         VERSION: [4.0.3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Output git ref sha1
         id: git-sha
         run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
