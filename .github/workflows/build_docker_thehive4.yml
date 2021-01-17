@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/thehive4
-  DOCKER_CONTEXT: ${{ env.GITHUB_WORKSPACE }}/.docker/thehive4
+  DOCKER_CONTEXT: $GITHUB_WORKSPACE/.docker/thehive4
   DOCKER_DOCKERFILE: Dockerfile
 jobs:
   latest:
