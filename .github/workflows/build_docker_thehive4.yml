@@ -1,0 +1,70 @@
+name: Build TheHive4 Docker Container
+on: 
+  push:
+    branches:
+    - master
+  schedule:
+    - cron:  '0 0 * * *'
+    #- cron:  '0 0 * * 4'
+  workflow_dispatch:
+jobs:
+  versions:
+    strategy:
+      matrix:
+        VERSION: [4.0.4]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        # with:
+        #   repository: 'MISP/MISP'
+        #   ref: 'v${{ matrix.VERSION}}'
+      - name: Output git ref sha1
+        id: git-sha
+        run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: Kaniko build
+        uses: aevea/action-kaniko@master
+        with:
+          image: ${{ secrets.DOCKERHUB_ORG }}/thehive4
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag: ${{ env.EXT_GIT_REF_SHA1 }}
+          extra_args: |
+            --digest-file=/dev/termination-log 
+            --reproducible 
+            --destination ${{ env.image }}/${{ matrix.VERSION }} 
+            --build-arg VERSION=${{ matrix.VERSION }}-1
+          path: .docker/thehive4
+          build_file: Dockerfile
+          tag_with_latest: true
+          cache: true
+          cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
+  # older:
+  #   strategy:
+  #     matrix:
+  #       VERSION: [2.4.135,2.4.134,2.4.133]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@master
+  #       with:
+  #         repository: 'MISP/MISP'
+  #         ref: 'v${{ matrix.VERSION}}'
+  #     - name: Output git ref sha1
+  #       id: git-sha
+  #       run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
+  #     - name: Kaniko build
+  #       uses: aevea/action-kaniko@master
+  #       with:
+  #         image: ${{ secrets.DOCKERHUB_ORG }}/misp-module
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
+  #         tag: ${{ env.EXT_GIT_REF_SHA1 }}
+  #         extra_args: |
+  #           --digest-file=/dev/termination-log 
+  #           --reproducible 
+  #           --destination ${{ env.image }}/${{ matrix.VERSION }} 
+  #           --build-arg VERSION=${{ matrix.VERSION }}
+  #         #path: 
+  #         build_file: docker/Dockerfile
+  #         tag_with_latest: false
+  #         cache: true
+  #         cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
