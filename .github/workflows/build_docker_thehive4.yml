@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/thehive4
-  DOCKER_CONTEXT: ${{env.GITHUB_WORKSPACE}}/.docker/thehive4
+  DOCKER_CONTEXT: ${{ env.GITHUB_WORKSPACE }}/.docker/thehive4
   DOCKER_DOCKERFILE: Dockerfile
 jobs:
   latest:
@@ -33,8 +33,8 @@ jobs:
             --reproducible 
             --destination ${{ env.image }}/${{ matrix.VERSION }} 
             --build-arg VERSION=${{ matrix.VERSION }}-1
-          path: ${{env.DOCKER_CONTEXT}}
-          build_file: ${{env.DOCKER_DOCKERFILE}}
+          path: ${{ env.DOCKER_CONTEXT }}
+          build_file: ${{ env.DOCKER_DOCKERFILE }}
           tag_with_latest: true
           cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
@@ -60,8 +60,8 @@ jobs:
             --reproducible 
             --destination ${{ env.image }}/${{ matrix.VERSION }} 
             --build-arg VERSION=${{ matrix.VERSION }}-1
-          path: ${{env.DOCKER_CONTEXT}}
-          build_file: ${{env.DOCKER_DOCKERFILE}}
+          path: ${{ env.DOCKER_CONTEXT }}
+          build_file: ${{ env.DOCKER_DOCKERFILE }}
           tag_with_latest: false
           cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
