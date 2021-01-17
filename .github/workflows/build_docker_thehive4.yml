@@ -1,14 +1,11 @@
 name: Build TheHive4 Docker Container
 on: 
-  push:
-    branches:
-    - master
   schedule:
     - cron:  '0 0 * * *'
   workflow_dispatch:
 env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/thehive4
-  DOCKER_CONTEXT: ${{ github.workspace }}/.docker/thehive4
+  DOCKER_CONTEXT: ./docker/thehive4
   DOCKER_DOCKERFILE: Dockerfile
 jobs:
   latest:
