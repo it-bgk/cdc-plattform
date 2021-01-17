@@ -26,7 +26,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           tag: ${{ env.EXT_GIT_REF_SHA1 }}
           extra_args: --digest-file=/dev/termination-log --reproducible --destination ${{env.DOCKER_REPO}}:${{ matrix.VERSION }} --build-arg VERSION=${{ matrix.VERSION }}-1 --verbosity=debug
-          path: .docker/thehive4
+          #path: .docker/thehive4
           build_file: ${{ env.DOCKER_DOCKERFILE }}
           tag_with_latest: true
           cache: true
