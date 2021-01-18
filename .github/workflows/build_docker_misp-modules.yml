@@ -42,7 +42,7 @@ jobs:
   other:
     strategy:
       matrix:
-        VERSION: [2.4.136]
+        VERSION: [v2.4.136]
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
