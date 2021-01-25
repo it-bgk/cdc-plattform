@@ -1,17 +1,21 @@
-install:
+install-all:
 	docker-compose pull
-	install-watcher
-	install-opencti
-install-watcher:
-	make -C watcher install
-install-opencti:
-	make -C opencti install
-start-main:
 	docker-compose up -d
-start-watcher:
-	make -C watcher start
-start-opencti:
-	make -C opencti start
+	${MAKE} install opencti
+	${MAKE} install watcher
+install-%:
+	${MAKE} -C $* install
+update-%:
+	${MAKE} -C $* update
+start-%:
+	${MAKE} -C $* start
+stop-%:
+	${MAKE} -C $* stop
+logs-%:
+	${MAKE} -C $* logs
+clean-%:
+	${MAKE} -C $* clean
+####
 update-repo:
 	./.helper/update.sh
 ####
@@ -27,8 +31,6 @@ backup:
 	backup_cassandra
 	backup_minemeld
 
-backup_es:
-	./.helper/backup.sh backup elasticsearch
 
 restore_es:
 	./.helper/backup.sh restore elasticsearch
@@ -38,7 +40,10 @@ cleanup_es:
 	
 status_es:
 	./.helper/backup.sh status elasticsearch
-	
+
+backup_es:
+	./.helper/backup.sh backup elasticsearch
+
 backup_cassandra:
 	./.helper/backup.sh backup cassandra
 
