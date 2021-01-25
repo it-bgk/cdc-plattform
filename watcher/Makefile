@@ -9,7 +9,7 @@ init:
 	docker exec -ti watcher python manage.py createsuperuser
 	docker exec -ti watcher python manage.py populate_db
 	docker restart watcher
-	docker logs -f --tail 10 watcher
+	${MAKE} logs
 #
 clean:
 	${MAKE} stop
@@ -20,7 +20,7 @@ update:
 start:
 	cd ..; docker-compose up -d traefik
 	cd ${FOLDER}; docker-compose up -d
-	${MAKE} log
+	${MAKE} logs
 stop:
 	cd ${FOLDER}; docker-compose down
 logs:

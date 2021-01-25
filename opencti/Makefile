@@ -13,7 +13,7 @@ update:
 start:
 	cd ..; docker-compose up -d traefik
 	cd ${FOLDER}; docker-compose --compatibility up -d
-	${MAKE} log
+	${MAKE} logs
 stop:
 	cd ${FOLDER}; docker-compose --compatibility down
 
