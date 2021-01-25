@@ -247,18 +247,18 @@ services:
             - AUTH_AD_USESSL=${TH_AUTH_AD_USESSL:-false}
             - AUTH_AD_HOSTS=${TH_AUTH_AD_HOSTS}
             - AUTH_DEFAULTUSERDOMAIN=${TH_AUTH_DEFAULTUSERDOMAIN}
-            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
+            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
             - CORTEX_KEY=${TH_CORTEX_KEY}
-            - CORTEX_URL=${TH_CORTEX_URL:-"http://cortex:9001"}
+            - CORTEX_URL=${TH_CORTEX_URL:-http://cortex:9001}
             - DEBUG=${TH_DEBUG}
-            - MISP_INT_URL=${TH_MISP_INT_URL:-"http://misp-internal/"}
+            - MISP_INT_URL=${TH_MISP_INT_URL:-http://misp-internal/}
             - MISP_INT_KEY=${TH_MISP_INT_KEY}
             - MISP_INT_CASE_TEMPLATE=${TH_MISP_INT_CASE_TEMPLATE}
-            - MISP_INT_MAX_AGE=${TH_MISP_INT_MAX_AGE:-"7 days"}
+            - MISP_INT_MAX_AGE=${TH_MISP_INT_MAX_AGE:-7 days}
             - MISP_INT_EXCLUDE_ORGS=${TH_MISP_INT_EXCLUDE_ORGS}
             - MISP_INT_EXCLUDE_TAGS=${TH_MISP_INT_EXCLUDE_TAGS}
             - MISP_INT_WHITELIST_TAGS=${TH_MISP_INT_WHITELIST_TAGS}
-            - MISP_PUB_URL=${TH_MISP_PUB_URL:-"http://misp-public/"}
+            - MISP_PUB_URL=${TH_MISP_PUB_URL:-http://misp-public/}
             - MISP_PUB_KEY=${TH_MISP_PUB_KEY}
             - MISP_PUB_CASE_TEMPLATE=${TH_MISP_PUB_CASE_TEMPLATE}
             - MISP_PUB_MAX_AGE=${TH_MISP_PUB_MAX_AGE:-"7 days"}
@@ -288,6 +288,7 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
+        mem_limit: 2G
     # misp-internal:
     #     image: itbgk/misp:2.4.134
     #     restart: unless-stopped
