@@ -7,6 +7,7 @@ services:
     watcher:
         networks: 
             traefik_internal:
+            default:
         ports:
         - 127.0.0.1:60000:9002
         #environment: 
