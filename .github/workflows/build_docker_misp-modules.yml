@@ -1,32 +1,72 @@
-name: Docker build
+name: Build MISP-Modules Docker Container
 on: 
-  push:
-    branches:
-    - master
   schedule:
-    - cron:  '0 0 * * 0'
-    - cron:  '0 0 * * 4'
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
+env:
+  MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/misp-modules
+  MY_DOCKER_CONTEXT: .
+  MY_DOCKER_DOCKERFILE: docker/Dockerfile
+  GIT_REPO: 'MISP/misp-modules'
 jobs:
-  docker:
+  latest:
+    strategy:
+      matrix:
+        VERSION: ['main']
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          repository: 'https://github.com/MISP/misp-modules.git'
-          ref: 'master'
+          repository: ${{ env.GIT_REPO }}
+          ref: '${{ matrix.VERSION}}'
       - name: Output git ref sha1
         id: git-sha
-        run: git rev-parse HEAD
+        run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Kaniko build
         uses: aevea/action-kaniko@master
         with:
-          image: ${{ secrets.DOCKERHUB_ORG }}/misp-module
+          image: ${{env.MY_DOCKER_REPO}}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tag: ${{ steps.git-sha.outputs }}
-          extra_args: 
-          #path: 
-          build_file: docker/Dockerfile
+          tag: ${{ env.EXT_GIT_REF_SHA1 }}
+          extra_args: |
+            --digest-file=/dev/termination-log 
+            --reproducible 
+            --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
+            --build-arg VERSION=${{ matrix.VERSION }}-1
+          path: ${{ env.MY_DOCKER_CONTEXT }}
+          build_file: ${{ env.MY_DOCKER_DOCKERFILE }}
           tag_with_latest: true
-          cache: false
+          cache: true
+          cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
+  other:
+    strategy:
+      matrix:
+        VERSION: [v2.4.136]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{ env.GIT_REPO }}
+          ref: '${{ matrix.VERSION}}'
+      - name: Output git ref sha1
+        id: git-sha
+        run: echo "EXT_GIT_REF_SHA1=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: Kaniko build
+        uses: aevea/action-kaniko@master
+        with:
+          image: ${{env.MY_DOCKER_REPO}}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tag: ${{ env.EXT_GIT_REF_SHA1 }}
+          extra_args: |
+            --digest-file=/dev/termination-log 
+            --reproducible 
+            --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
+            --build-arg VERSION=${{ matrix.VERSION }}-1
+          path: ${{ env.MY_DOCKER_CONTEXT }}
+          build_file: ${{ env.MY_DOCKER_DOCKERFILE }}
+          tag_with_latest: false
+          cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
