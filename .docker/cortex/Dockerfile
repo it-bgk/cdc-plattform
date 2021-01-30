@@ -45,7 +45,7 @@ RUN set -eu \
 
 # Add additional ressources
 RUN set -eu \
-    ;git clone https://github.com/firehol/blocklist-ipsets.git ${DATA_PATH}/FireHOLBlocklists \
+    #;git clone https://github.com/firehol/blocklist-ipsets.git ${DATA_PATH}/FireHOLBlocklists \
     ;git clone https://github.com/MISP/misp-warninglists.git ${DATA_PATH}/misp-warninglists \
     ;git clone https://github.com/norgalades/SendEmail.git /etc/cortex/responders/SendEmail \
     ;mkdir /etc/cortex/analyzers \
@@ -61,5 +61,5 @@ COPY s6/cortex/default_vars.sh /default_vars.sh
 
 ENTRYPOINT ["/init"]
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 CMD curl --fail http://127.0.0.1:9001 || exit 1
-
+EXPOSE 9001
 ENV job_directory="/tmp/cortex-jobs"

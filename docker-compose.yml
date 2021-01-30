@@ -19,6 +19,10 @@ volumes:
         name: misp_internal_data
     misp_public_data:
         name: misp_public_data
+    misp-internal-db_data:
+        name: misp-internal-db_data
+    misp-public-db_data:
+        name: misp-public-db_data
 
 networks:
     egress:
@@ -46,23 +50,23 @@ services:
         container_name: watchtower
         restart: unless-stopped
         environment: 
-        - WATCHTOWER_CLEANUP=true
-        - WATCHTOWER_POLL_INTERVAL=300
-        - WATCHTOWER_MONITOR_ONLY=false
-        - WATCHTOWER_SCHEDULE=0 0 4 * * *
-        - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
-        #
-        - WATCHTOWER_NOTIFICATIONS=email
-            # in seconds:
-        - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
-            # to skip cert verify
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
-        - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
-        - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
-        - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+            - WATCHTOWER_CLEANUP=true
+            - WATCHTOWER_POLL_INTERVAL=300
+            - WATCHTOWER_MONITOR_ONLY=false
+            - WATCHTOWER_SCHEDULE=0 0 4 * * *
+            - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
+            #
+            - WATCHTOWER_NOTIFICATIONS=email
+                # in seconds:
+            - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+                # to skip cert verify
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
+            - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+            - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
         networks:
             egress:
         volumes:
@@ -75,12 +79,12 @@ services:
         restart: unless-stopped
         container_name: traefik
         volumes:
-        - acme_data:/etc/traefik/acme
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-        - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
-        - ${SSL_CA}:/ssl/ca:ro
-        - ${SSL_CERT}:/ssl/cert:ro
-        - ${SSL_KEY}:/ssl/key:ro
+            - acme_data:/etc/traefik/acme
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
+            - ${SSL_ROOT_CA}:/ssl/ca:ro
+            - ${SSL_CERT}:/ssl/cert:ro
+            - ${SSL_KEY}:/ssl/key:ro
         environment: 
             # Entrypoint HTTP
             ## Enable entrypoint
@@ -138,25 +142,24 @@ services:
         - "traefik.http.routers.traefik.middlewares=auth"
         - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
     elasticsearch:
-        #image: amazon/opendistro-for-elasticsearch:latest
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
         container_name: elasticsearch
         networks:
             traefik_internal:
         environment: 
-        - node.name=elasticsearch
-        - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-        - "http.host=0.0.0.0"
-        - "discovery.type=single-node"
-        - "transport.host=0.0.0.0"
-        - script.allowed_types=inline
-        - thread_pool.search.queue_size=100000
-        - thread_pool.write.queue_size=10000
-        - path.repo=/backup
-        - cluster.name=hive
-        #- opendistro_security.ssl.http.enabled=false  
+            - node.name=elasticsearch
+            - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+            - "http.host=0.0.0.0"
+            - "discovery.type=single-node"
+            - "transport.host=0.0.0.0"
+            - script.allowed_types=inline
+            - thread_pool.search.queue_size=100000
+            - thread_pool.write.queue_size=10000
+            - path.repo=/backup
+            - cluster.name=hive
+            #- opendistro_security.ssl.http.enabled=false  
         expose:
             - 9200 # HTTP
         volumes:
@@ -172,77 +175,19 @@ services:
                 soft: 65536
                 hard: 65536
         mem_limit: 6G
-    # kibana:
-        #     image: amazon/opendistro-for-elasticsearch-kibana:latest
-        #     container_name: kibana
-        #     # ports:
-        #     #     - 5601:5601
-        #     depends_on: 
-        #         - es-01
-        #     expose:
-        #         - "5601"
-        #     # environment:
-        #     #     - ELASTICSEARCH_URL=https://es-01:9200
-        #     #     - ELASTICSEARCH_HOSTS=https://es-01:9200
-        #         # - opendistro_security.ssl.http.enabled=false  
-        #     networks:
-        #         - traefik_internal
-        #     volumes:
-        #         - es_config:/es_config:ro
-        #         - ./DATA/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
-        #     runtime: runc
-        #     labels:
-        #         - "traefik.enable=true"
-        #         - "traefik.http.routers.kibana.rule=PathPrefix(`/kibana`)" #||PathPrefix(`/app/kibana`)||PathPrefix(`/login`)||PathPrefix(`/bundles`)"
-        #         - "traefik.http.services.kibana.loadbalancer.server.port=5601"
-    # cerebro:
-        # image: lmenezes/cerebro
-        # restart: unless-stopped
-        # container_name: cerebro
-        # volumes:
-        #     - "./DATA/cerebro/application.conf:/opt/cerebro/conf/application.conf"
-        # environment: 
-        #     - SECRET_KEY=${CEREBRO_SECRET}
-        #     - BASE_PATH=${CEREBRO_BASE_PATH}
-        #     - ES_URL=${CEREBRO_ES_URL}
-        #     - ES_AUTH_USER=${CEREBRO_ES_AUTH_USER}
-        #     - ES_AUTH_PW=${CEREBRO_ES_AUTH_PW}
-        #     - AUTH_TYPE=${CEREBRO_AUTH_TYPE}
-        #     - BASIC_AUTH_USER=${CEREBRO_BASIC_AUTH_USER}
-        #     - BASIC_AUTH_PWD=${CEREBRO_BASIC_AUTH_PW}
-        #     - LDAP_URL=${CEREBRO_LDAP_URL}
-        #     - LDAP_BASE_DN=${CEREBRO_LDAP_BASE_DN}
-        #     # Usually method should  be "simple" otherwise, set it to the SASL mechanisms
-        #     - LDAP_METHOD=simple
-        #     - LDAP_USER_TEMPLATE=${CEREBRO_LDAP_USER_TEMPLATE}
-        #     - LDAP_BIND_DN=${CEREBRO_LDAP_BIND_DN}
-        #     - LDAP_BIND_PWD=${CEREBRO_LDAP_BIND_PW}
-        #     - LDAP_GROUP_BASE_DN=${CEREBRO_LDAP_GROUP_BASE_DN}
-        #     - LDAP_USER_ATTR=${CEREBRO_LDAP_USER_ATTR}
-        #     - LDAP_USER_ATTR_TEMPLATE=${CEREBRO_LDAP_USER_ATTR_TEMPLATE}p
-        #     - LDAP_GROUP=${CEREBRO_LDAP_GROUP}
-        # networks:
-        #     traefik_internal:
-        # depends_on: 
-        # - elasticsearch
-        # - traefik
-        # labels:
-        #     - "traefik.enable=true"
-        #     - "traefik.http.routers.es-admin.rule=Host(`cerebro.${FQDN}`)"
-        #     - "traefik.http.services.es-admin.loadbalancer.server.port=9000"
     cortex:
-        image: itbgk/cortex:3.1.0-1
+        image: itbgk/cortex:${CORTEX_VERSION}
         build:
             context: .docker/cortex
             args: 
-                VERSION: 3.1.0-1
+                VERSION: ${CORTEX_VERSION}
         restart: unless-stopped
         container_name: cortex
         volumes:
             #- ./DATA/cortex/application.conf:/etc/cortex/application.conf
             - /var/run/docker.sock:/var/run/docker.sock:ro # https://github.com/TheHive-Project/Cortex/issues/260#issuecomment-673292919
             - es_config:/es_config:ro
-            - ./DATA/cortex/nslr:/opt/cortex/nslr:ro
+            #- ./DATA/cortex/nslr:/opt/cortex/nslr:ro
             - /tmp/cortex-jobs:/tmp/cortex-jobs
         environment: 
             - SECRET=${CORTEX_SECRET}
@@ -273,52 +218,62 @@ services:
         - traefik
         expose:
             - 9001
-        runtime: runc
-        mem_limit: 8G
+        mem_limit: 2G
         labels:
             - "traefik.enable=true"
-            ### SSL
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
             - "traefik.http.routers.cortex.entrypoints=https"
     thehive:
-        image: itbgk/thehive4:4.0.2-1
+        image: itbgk/thehive4:${TH_VERSION}
         build:
             context: .docker/thehive4
             args: 
-                VERSION: 4.0.2-1
+                VERSION: ${TH_VERSION}
         restart: unless-stopped
         container_name: thehive
         networks:
             egress:
             traefik_internal:
         #volumes:
-        #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
+            #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
         depends_on:
         - traefik
         - cassandra
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
-            - CORTEX_KEY=${TH_CORTEX_KEY}
-            - CORTEX_URL=${TH_CORTEX_URL}
-            - SECRET=${TH_SECRET}
-            - MISP_URL=${TH_MISP_URL}
-            - MISP_KEY=${TH_MISP_KEY}
-            - MISP_CASE_TEMPLATE=${TH_MISP_CASE_TEMPLATE}
             - AUTH_AD_WINDOMAIN=${TH_AUTH_AD_WINDOMAIN}
             - AUTH_AD_DNSDOMAIN=${TH_AUTH_AD_DNSDOMAIN}
             - AUTH_AD_USESSL=${TH_AUTH_AD_USESSL:-false}
             - AUTH_AD_HOSTS=${TH_AUTH_AD_HOSTS}
-            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
             - AUTH_DEFAULTUSERDOMAIN=${TH_AUTH_DEFAULTUSERDOMAIN}
+            - CASSANDRA_DB_HOSTNAME=${TH_CASSANDRA_DB_HOSTNAME:-th-cassandra}
+            - CORTEX_KEY=${TH_CORTEX_KEY}
+            - CORTEX_URL=${TH_CORTEX_URL:-http://cortex:9001}
             - DEBUG=${TH_DEBUG}
+            - MISP_INT_URL=${TH_MISP_INT_URL:-http://misp-internal/}
+            - MISP_INT_KEY=${TH_MISP_INT_KEY}
+            - MISP_INT_CASE_TEMPLATE=${TH_MISP_INT_CASE_TEMPLATE}
+            - MISP_INT_MAX_AGE=${TH_MISP_INT_MAX_AGE:-7 days}
+            - MISP_INT_EXCLUDE_ORGS=${TH_MISP_INT_EXCLUDE_ORGS}
+            - MISP_INT_EXCLUDE_TAGS=${TH_MISP_INT_EXCLUDE_TAGS}
+            - MISP_INT_WHITELIST_TAGS=${TH_MISP_INT_WHITELIST_TAGS}
+            - MISP_PUB_URL=${TH_MISP_PUB_URL:-http://misp-public/}
+            - MISP_PUB_KEY=${TH_MISP_PUB_KEY}
+            - MISP_PUB_CASE_TEMPLATE=${TH_MISP_PUB_CASE_TEMPLATE}
+            - MISP_PUB_MAX_AGE=${TH_MISP_PUB_MAX_AGE:-"7 days"}
+            - MISP_PUB_EXCLUDE_ORGS=${TH_MISP_PUB_EXCLUDE_ORGS}
+            - MISP_PUB_EXCLUDE_TAGS=${TH_MISP_PUB_EXCLUDE_TAGS}
+            - MISP_PUB_WHITELIST_TAGS=${TH_MISP_PUB_WHITELIST_TAGS}
+            - SECRET=${TH_SECRET}
         expose:
             - 9000
+        mem_limit: 2G
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=https"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
+            - "traefik.http.routers.thehive.entrypoints=https"
     cassandra:
         image: cassandra:latest
         restart: unless-stopped
@@ -333,52 +288,109 @@ services:
             timeout: 30s
             retries: 3
             start_period: 60s
-    misp-internal:
-        image: itbgk/misp:2.4.134
-        restart: unless-stopped
-        container_name: misp-internal
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_internal_data:/var/www/MISP
-        env_file: env/misp-internal.env
-        depends_on: 
-        - traefik
-        - misp-redis
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"       
-    misp-public:
-        image: itbgk/misp:2.4.134
-        restart: unless-stopped
-        container_name: misp-public
-        networks:
-            traefik_internal:
-            egress:
-        volumes:
-            - misp_public_data:/var/www/MISP
-        env_file: env/misp-public.env
-        depends_on: 
-        - traefik
-        - misp-redis
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.thehive.rule=Host(`misp-public.${FQDN}`)"
-            - "traefik.http.routers.thehive.entrypoints=http"
-            - "traefik.http.services.thehive.loadbalancer.server.port=80"
+        mem_limit: 2G
+    # misp-internal:
+    #     image: itbgk/misp:2.4.134
+    #     restart: unless-stopped
+    #     container_name: misp-internal
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_internal_data:/var/www/MISP
+    #         - /dev/urandom:/dev/random
+    #         #- ${MISP_INTERNAL_DATA_DIR}/web:/var/www/MISP
+    #     environment: 
+    #         - MYSQL_HOST=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+    #         - MISP_ADMIN_EMAIL=${MISP_INTERNAL_ADMIN_EMAIL}
+    #         - MISP_ADMIN_PASSPHRASE=${MISP_INTERNAL_ADMIN_PASSPHRASE}
+    #         - MISP_BASEURL=${MISP_INTERNAL_BASEURL}
+    #         - POSTFIX_RELAY_HOST=${MISP_INTERNAL_POSTFIX_RELAY_HOST}
+    #         - TIMEZONE=${MISP_INTERNAL_TIMEZONE}
+    #         - DATA_DIR=${MISP_INTERNAL_DATA_DIR}
+    #     depends_on: 
+    #         - traefik
+    #         - misp-redis
+    #         - misp-internal-db
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    # misp-internal-db:
+    #     container_name: misp-internal-db
+    #     image: mariadb
+    #     restart: unless-stopped
+    #     networks:
+    #         traefik_internal:
+    #     volumes:
+    #         #- ${DATA_DIR}/db:/var/lib/mysql
+    #         - misp-internal-db_data:/var/lib/mysql
+    #     environment:
+    #         - MYSQL_DATABASE=${MISP_INTERNAL_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_INTERNAL_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_INTERNAL_MYSQL_PASSWORD}
+    #         - MYSQL_ROOT_PASSWORD=${MISP_INTERNAL_MYSQL_ROOT_PASSWORD}
+    # misp-public:
+    #     image: itbgk/misp:2.4.134
+    #     restart: unless-stopped
+    #     container_name: misp-public
+    #     networks:
+    #         traefik_internal:
+    #         egress:
+    #     volumes:
+    #         - misp_public_data:/var/www/MISP
+    #         - /dev/urandom:/dev/random
+    #         #- ${MISP_PUBLIC_DATA_DIR}/web:/var/www/MISP
+    #     environment: 
+    #         - MYSQL_HOST=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+    #         - MISP_ADMIN_EMAIL=${MISP_PUBLIC_ADMIN_EMAIL}
+    #         - MISP_ADMIN_PASSPHRASE=${MISP_PUBLIC_ADMIN_PASSPHRASE}
+    #         - MISP_BASEURL=${MISP_PUBLIC_BASEURL}
+    #         - POSTFIX_RELAY_HOST=${MISP_PUBLIC_POSTFIX_RELAY_HOST}
+    #         - TIMEZONE=${MISP_PUBLIC_TIMEZONE}
+    #         - DATA_DIR=${MISP_PUBLIC_DATA_DIR}
+    #     depends_on: 
+    #     - traefik
+    #     - misp-redis
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.thehive.rule=Host(`mp.${FQDN}`)"
+    #         - "traefik.http.routers.thehive.entrypoints=http"
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    # misp-public-db:
+    #     container_name: misp-public-db
+    #     image: mariadb
+    #     restart: unless-stopped
+    #     networks:
+    #         traefik_internal:
+    #     volumes:
+    #         #- ${MISP_PUBLIC_DATA_DIR}/db:/var/lib/mysql
+    #         - misp-public-db_data:/var/lib/mysql
+    #     environment:
+    #         - MYSQL_DATABASE=${MISP_PUBLIC_MYSQL_DATABASE}
+    #         - MYSQL_USER=${MISP_PUBLIC_MYSQL_HOST}
+    #         - MYSQL_PASSWORD=${MISP_PUBLIC_MYSQL_PASSWORD}
+    #         - MYSQL_ROOT_PASSWORD=${MISP_PUBLIC_MYSQL_ROOT_PASSWORD}
     # misp-modules:
     #     image: itbgk/misp-modules
     #     restart: unless-stopped
     #     container_name: misp-modules
+    #     volumes: 
+    #         - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/sites/ca:ro
     #     networks:
     #         egress:
     #         traefik_internal:
     #     expose:
     #         - 6666
     #     env_file: env/misp-modules.env
+    ###
     misp-redis:
         image: redis
         restart: unless-stopped
@@ -394,9 +406,13 @@ services:
         container_name: minemeld
         restart: unless-stopped
         tmpfs: /run
+        environment: 
+            - REQUESTS_CA_BUNDLE=/opt/minemeld/local/certs/cacert.pem
         volumes: 
             - minemeld_local:/opt/minemeld/local
-            - minemeld_logs:/opt/minemeld/log 
+            - minemeld_logs:/opt/minemeld/log
+            # https://live.paloaltonetworks.com/t5/minemeld-discussions/minemeld-outbound-calls-impacted-by-ssl-interception/m-p/133152#M642
+            - ${SSL_ROOT_CA}:/opt/minemeld/local/certs/site/custom-root-ca:ro
         networks:
             egress:
             traefik_internal:
@@ -414,7 +430,7 @@ services:
         restart: unless-stopped
         container_name: nginx-static-files
         volumes:
-        - ./DATA/nginx-static-files/:/var/www/html/:ro
+        - ./DATA/nginx-static-files/:/usr/share/nginx/html/:ro
         networks: 
             traefik_internal:
         depends_on: 

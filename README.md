@@ -46,15 +46,9 @@ This project thanks all contributors of the projects listed below, without them 
 - Sidekicks
   - [Traefik](https://docs.traefik.io/)
   - [Redis](https://hub.docker.com/_/redis)
-  - [Janusgraph](https://hub.docker.com/r/janusgraph/janusgraph)
   - [Cassandra](https://hub.docker.com/_/cassandra/)
   - [Watchtower](http://github.com/containerr/watchtower)
   - [Elasticsearch](https://www.docker.elastic.co/)
-<!--
-- Management
-  - [Cerebro](https://github.com/lmenezes/cerebro)
-  - [Open Distro for Elasticsearch](https://opendistro.github.io/for-elasticsearch/)
--->
 
 # License
 We use the [BSD-3 license](LICENSE).

@@ -2,52 +2,41 @@ version: "3"
 networks:
     traefik_internal:
         external: true
-
+    
 services:
     elasticsearch:
         image: itbgk/elasticsearch-oss:7.9.2
         environment: 
-        - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-        - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-        - "http.host=0.0.0.0"
-        - "discovery.type=single-node"
-        - "transport.host=0.0.0.0"
-        - script.allowed_types=inline
-        - thread_pool.search.queue_size=100000
-        - thread_pool.write.queue_size=10000
+        #- "ES_JAVA_OPTS=-Xms512M -Xmx512M" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
         - path.repo=/backup
-        - cluster.name=opencti
+        volumes:
+        - $PWD/../../BACKUP/opencti-elasticsearch:/backup
     opencti:
-        image: opencti/platform:rolling
-        # environment: 
-        #     - APP__BASE_PATH=${OPENCTI_BASE_PATH}
+        #environment: 
+        # - APP__BASE_PATH=${OPENCTI_BASE_PATH}
+        # - PROVIDERS__LDAP__STRATEGY=LdapStrategy
+        # - PROVIDERS__LDAP__CONFIG__URL=ldaps://mydc.limeo.org:629
+        # - PROVIDERS__LDAP__CONFIG__BIND_DN=cn=Administrator,cn=Users,dc=limeo,dc=org
+        # - PROVIDERS__LDAP__CONFIG__BIND_CREDENTIALS=XXXXXXXXXX
+        # - PROVIDERS__LDAP__CONFIG__SEARCH_BASE=cn=Users,dc=limeo,dc=org
+        # - PROVIDERS__LDAP__CONFIG__SEARCH_FILTER={{`(cn={{username}})`}}
+        # - PROVIDERS__LDAP__CONFIG__MAIL_ATTRIBUTE=mail
+        # - PROVIDERS__LDAP__CONFIG__ACCOUNT_ATTRIBUTE=givenName
+        # - PROVIDERS__LDAP__CONFIG__ALLOW_SELF_SIGNED=true
+        # - PROVIDERS__LOCAL__STRATEGY=LocalStrategy
+        #- APP__LOGS_LEVEL=debug
+        volumes:
+            - ${SSL_ROOT_CA}:/etc/ssl/certs/custom-root-ca.crt:ro
         networks: 
             traefik_internal:
+            default:
         ports:
             - 127.0.0.1:50000:8080
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.opencti.rule=Host(`opencti.${FQDN}`)"
+            - "traefik.http.routers.opencti.entrypoints=https"
             - "traefik.http.services.opencti.loadbalancer.server.port=8080"
-    # connector-export-file-stix:
-    #     image: opencti/connector-export-file-stix:rolling
-    # connector-export-file-csv:
-    #     image: opencti/connector-export-file-csv:rolling
-    # connector-import-file-stix:
-    #     image: opencti/connector-import-file-stix:rolling
-    # connector-import-file-pdf-observables:
-    #     image: opencti/connector-import-file-pdf-observables:rolling
-    # connector-opencti:
-    #     image: opencti/connector-opencti:rolling
-    # connector-history:
-    #     image: opencti/connector-history:rolling
-    # worker:
-    #     image: opencti/worker:rolling
-    # redis:
-    #     image: redis
     minio:
-        image: minio/minio
         ports:
             - 127.0.0.1:50001:9000
-    # rabbitmq:
-    #     image: rabbitmq:management

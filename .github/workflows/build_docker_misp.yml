@@ -7,12 +7,13 @@ env:
   MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/misp
   MY_DOCKER_CONTEXT: .
   MY_DOCKER_DOCKERFILE: docker/Dockerfile
-  GIT_REPO: 'MISP/MISP'
+  GIT_REPO: '8ear/MISP'
+  #GIT_REPO: 'MISP/MISP'
 jobs:
   latest:
     strategy:
       matrix:
-        VERSION: [v2.4.136]
+        VERSION: [v2.4.137]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +43,7 @@ jobs:
   older:
     strategy:
       matrix:
-        VERSION: [v2.4.135,v2.4.134]
+        VERSION: [v2.4.136,v2.4.135,v2.4.134]
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
