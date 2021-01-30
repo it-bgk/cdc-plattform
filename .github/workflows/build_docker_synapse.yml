@@ -7,7 +7,8 @@ env:
   MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/thehive-synapse
   MY_DOCKER_CONTEXT: .
   MY_DOCKER_DOCKERFILE: Dockerfile
-  GIT_REPO: 'jeffrey-e/Synapse'
+  #GIT_REPO: 'jeffrey-e/Synapse'
+  GIT_REPO: '8ear/Synapse'
 jobs:
   latest:
     strategy:

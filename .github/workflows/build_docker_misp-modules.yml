@@ -7,7 +7,7 @@ env:
   MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/misp-modules
   MY_DOCKER_CONTEXT: .
   MY_DOCKER_DOCKERFILE: docker/Dockerfile
-  GIT_REPO: 'MISP/misp-modules'
+  GIT_REPO: '8ear/misp-modules'
 jobs:
   latest:
     strategy:
