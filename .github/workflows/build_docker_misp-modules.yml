@@ -8,6 +8,7 @@ env:
   MY_DOCKER_CONTEXT: .
   MY_DOCKER_DOCKERFILE: docker/Dockerfile
   GIT_REPO: '8ear/misp-modules'
+  #GIT_REPO: 'MISP/misp-modules'
 jobs:
   latest:
     strategy:
