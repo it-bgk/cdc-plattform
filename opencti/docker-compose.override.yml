@@ -40,3 +40,139 @@ services:
     minio:
         ports:
             - 127.0.0.1:50001:9000
+    connector-cyber-threat-coalition:
+        # https://github.com/OpenCTI-Platform/connectors/blob/master/cyber-threat-coalition/docker-compose.yml
+        image: opencti/connector-cyber-threat-coalition:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_CYBER_THREAT_COALITION_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=CyberThreatCoalition
+        - CONNECTOR_SCOPE=indicator,report,identity
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=false
+        - CONNECTOR_LOG_LEVEL=info
+        - CYBER_THREAT_COALITION_INTERVAL=21600 # Seconds (6 hours)
+        - CYBER_THREAT_COALITION_BASE_URL=https://blacklist.cyberthreatcoalition.org/vetted
+        - CYBER_THREAT_COALITION_CREATE_INDICATORS=true
+        - CYBER_THREAT_COALITION_CREATE_OBSERVABLES=true
+        restart: always
+    connector-cve:
+        # https://github.com/OpenCTI-Platform/connectors/blob/master/cve/docker-compose.yml
+        image: opencti/connector-cve:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_CVE_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=Common Vulnerabilities and Exposures
+        - CONNECTOR_SCOPE=identity,vulnerability
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - CVE_IMPORT_HISTORY=true # Import history at the first run (after only recent), reset the connector state if you want to re-import
+        - CVE_NVD_DATA_FEED=https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-recent.json.gz
+        - CVE_HISTORY_DATA_FEED=https://nvd.nist.gov/feeds/json/cve/1.1/
+        - CVE_INTERVAL=7 # Days
+        restart: always
+    connector-alienvault:
+        # https://github.com/OpenCTI-Platform/connectors/blob/master/alienvault/docker-compose.yml
+        image: opencti/connector-alienvault:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_ALIENVAULT_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=AlienVault
+        - CONNECTOR_SCOPE=alienvault
+        - CONNECTOR_CONFIDENCE_LEVEL=15
+        - CONNECTOR_UPDATE_EXISTING_DATA=false
+        - CONNECTOR_LOG_LEVEL=info
+        - ALIENVAULT_BASE_URL=https://otx.alienvault.com
+        - ALIENVAULT_API_KEY=${OPENCTI_ALIENVAULT_API_KEY}
+        - ALIENVAULT_TLP=White
+        - ALIENVAULT_CREATE_OBSERVABLES=true
+        - ALIENVAULT_CREATE_INDICATORS=true
+        - ALIENVAULT_PULSE_START_TIMESTAMP=2020-05-01T00:00:00                  # BEWARE! Could be a lot of pulses!
+        - ALIENVAULT_REPORT_TYPE=threat-report
+        - ALIENVAULT_REPORT_STATUS=New
+        - ALIENVAULT_GUESS_MALWARE=false                                        # Use tags to guess malware.
+        - ALIENVAULT_GUESS_CVE=false                                            # Use tags to guess CVE.
+        - ALIENVAULT_EXCLUDED_PULSE_INDICATOR_TYPES=FileHash-MD5,FileHash-SHA1  # Excluded Pulse indicator types.
+        - ALIENVAULT_INTERVAL_SEC=1800
+        restart: always
+    connector-cybercrimetracker:
+        image: opencti/connector-cybercrime-tracker:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_CYBERCRIMETRACKER_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=Cybercrime-Tracker
+        - CONNECTOR_SCOPE=cybercrime-tracker
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - CYBERCRIME_TRACKER_FEED_URL=http://cybercrime-tracker.net/rss.xml
+        - CYBERCRIME_TRACKER_TLP=WHITE
+        - CYBERCRIME_TRACKER_INTERVAL=86400
+        - CYBERCRIME_TRACKER_CREATE_INDICATORS=true
+        - CYBERCRIME_TRACKER_CREATE_OBSERVABLES=true
+        restart: always
+    connector-malpedia:
+        # https://github.com/OpenCTI-Platform/connectors/blob/master/malpedia/docker-compose.yml
+        image: opencti/connector-malpedia:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_MALPEDIA_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=Malpedia
+        - CONNECTOR_SCOPE=malpedia
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=false
+        - CONNECTOR_LOG_LEVEL=info
+        - MALPEDIA_AUTH_KEY=${OPENCTI_MALPEDIA_API_KEY} # Empty key only fetches TLP:WHITE information
+        - MALPEDIA_INTERVAL_SEC=86400 # Run once every day
+        - MALPEDIA_IMPORT_INTRUSION_SETS=false
+        - MALPEDIA_IMPORT_YARA=true
+        - MALPEDIA_CREATE_INDICATORS=true
+        - MALPEDIA_CREATE_OBSERVABLES=true
+        restart: always
+    connector-hygiene:
+        # https://github.com/OpenCTI-Platform/connectors/blob/master/hygiene/docker-compose.yml
+        image: opencti/connector-hygiene:4.1.1
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_HYGIENE_ID}
+        - CONNECTOR_TYPE=INTERNAL_ENRICHMENT
+        - CONNECTOR_NAME=Hygiene
+        - CONNECTOR_SCOPE=IPv4-Addr,IPv6-Addr,Domain-Name,StixFile,Artifact
+        - CONNECTOR_AUTO=true
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_LOG_LEVEL=info
+        restart: always
+    connector-misp:
+        # https://www.notion.so/Connectors-4586c588462d4a1fb5e661f2d9837db8
+        image: opencti/connector-misp:latest
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${CONNECTOR_MISP_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=MISP
+        - CONNECTOR_SCOPE=misp
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=false
+        - CONNECTOR_LOG_LEVEL=info
+        - MISP_URL=${OPENCTI_MISP_URL:-http://misp-internal} # Required
+        - MISP_KEY=${OPENCTI_MISP_API_KEY} # Required
+        - MISP_SSL_VERIFY=False # Required
+        - MISP_CREATE_REPORTS=True # Required, create report for MISP event
+        - MISP_REPORT_CLASS=MISP event # Optional, report_class if creating report for event
+        - MISP_IMPORT_FROM_DATE=2000-01-01 # Optional, import all event from this date
+        - MISP_IMPORT_TAGS=opencti:import,type:osint # Optional, list of tags used for import events
+        - MISP_INTERVAL=1 # Required, in minutes
+        restart: always
