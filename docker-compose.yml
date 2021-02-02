@@ -75,7 +75,7 @@ services:
         mem_limit: 512M
     # https://docs.traefik.io/   
     traefik:
-        image: traefik:latest
+        image: traefik:2.4
         restart: unless-stopped
         container_name: traefik
         volumes:
@@ -289,6 +289,40 @@ services:
             retries: 3
             start_period: 60s
         mem_limit: 2G
+    synapse:
+        image: itbgk/thehive-synapse
+        restart: unless-stopped
+        container_name: th-synapse
+        environment: 
+        - DEBUG=${TH_SYNAPSE_DEBUG:-False}
+        - TH_URL=${TH_SYNAPSE_TH_URL:-http://thehive:9000}
+        - TH_USER=${TH_SYNAPSE_TH_USER:-synapse@local}
+        - TH_API_KEY=${TH_SYNAPSE_TH_API_KEY}
+        - EWS_HOST=${TH_SYNAPSE_EWS_HOST}
+        - EWS_USERNAME=${TH_SYNAPSE_EWS_USERNAME}
+        - EWS_PASSWORD=${TH_SYNAPSE_EWS_PASSWORD}
+        - EWS_AUTH_TYPE=${TH_SYNAPSE_EWS_AUTH_TYPE:-NTLM}
+        - EWS_SMTP_ADDRESS=${TH_SYNAPSE_EWS_SMTP_ADDRESS}
+        - EWS_FOLDER_NAME=${TH_SYNAPSE_EWS_FOLDER_NAME}
+        networks: 
+            egress: # Internet Access is required
+            traefik_internal:
+        depends_on: 
+        - thehive
+        expose:
+        - 5000
+        mem_limit: 2G
+        healthcheck:
+            test: [ "CMD", "curl", "--fail", "http://127.0.0.1:5000/ews2case" ]
+            timeout: 30s
+            interval: 60s
+            retries: 3
+            start_period: 60s
+        labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.synapse.rule=Host(`synapse.${FQDN}`)"
+        - "traefik.http.services.synapse.loadbalancer.server.port=5000"
+        - "traefik.http.routers.synapse.entrypoints=https"
     # misp-internal:
     #     image: itbgk/misp:2.4.134
     #     restart: unless-stopped
