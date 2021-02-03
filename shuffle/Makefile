@@ -1,0 +1,22 @@
+FOLDER:=shuffle
+install:
+	git clone https://github.com/frikky/Shuffle.git ${FOLDER}
+	mv ${FOLDER}/.env ${FOLDER}/.env.orig
+	ln -s $${PWD}/../.env ${FOLDER}/.env
+	ln -s $${PWD}/docker-compose.override.yml ${FOLDER}/
+#
+clean:
+	${MAKE} stop
+	rm -Rf ${FOLDER}
+update:
+	cd ${FOLDER}; git pull
+	${MAKE} start
+start:
+	cd ..; docker-compose up -d traefik
+	cd ${FOLDER}; docker-compose --compatibility up -d
+	${MAKE} logs
+stop:
+	cd ${FOLDER}; docker-compose --compatibility down
+
+logs:
+	cd ${FOLDER}; docker-compose --compatibility logs -f --tail 10

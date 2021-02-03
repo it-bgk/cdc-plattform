@@ -43,6 +43,8 @@ This project thanks all contributors of the projects listed below, without them 
   - [MISP](https://github.com/misp/misp)
   - [Open CTI](https://github.com/OpenCTI-Platform/opencti)
   - [Watcher](https://github.com/Felix83000/Watcher)
+- Automation
+  - [Shuffle](https://github.com/frikky/Shuffle)
 - Threat Intelligence Processing
   - [MineMeld](https://github.com/PaloAltoNetworks/minemeld/wiki)
 - Sidekicks

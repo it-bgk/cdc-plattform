@@ -1,0 +1,18 @@
+version: '3'
+networks:
+    traefik_internal:
+        external: true
+services:
+  frontend:
+    networks: 
+      traefik_internal:
+      shuffle:
+    labels:
+    - "traefik.enable=true" 
+    - "traefik.http.routers.shuffle.rule=Host(`shuffle.${FQDN}`)"
+    - "traefik.http.routers.shuffle.entrypoints=https"
+    - "traefik.http.services.shuffle.loadbalancer.server.port=80"
+volumes:
+  shuffle_database:
+  shuffle_apps:
+  shuffle_files:
