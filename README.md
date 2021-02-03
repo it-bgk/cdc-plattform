@@ -34,6 +34,8 @@ see [Docs](docs/Home.md)
 This project thanks all contributors of the projects listed below, without them this project would never be possible:
 - Case Management
   - [TheHive](https://github.com/TheHive-Project/TheHive)
+- Case Documentation
+  - [Hedgedoc](https://docs.hedgedoc.org)
 - Threat Hunting
   - [Cortex](https://github.com/TheHive-Project/Cortex)
   - [Cortex-Analyzer](https://github.com/TheHive-Project/Cortex-Analyzers)

@@ -1,6 +1,7 @@
 .env
 watcher/watcher
 opencti/opencti
+hedgedoc/hedgedoc
 /BACKUP/**
 /DATA/*
 !/DATA/ssl

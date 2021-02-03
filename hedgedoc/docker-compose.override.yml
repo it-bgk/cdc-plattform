@@ -1,0 +1,51 @@
+version: '3'
+networks:
+    traefik_internal:
+        external: true
+
+services:
+    database:
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U hedgedoc"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+    app:
+        # https://docs.hedgedoc.org/configuration/#nodejs
+        #image: quay.io/hedgedoc/hedgedoc:1.7.2-alpine
+        restart: unless-stopped
+        environment: 
+        - CMD_LDAP_URL=${HEDGEDOC_LDAP_SERVER_URI}
+        - CMD_LDAP_BINDDN=${HEDGEDOC_LDAP_BINDDN}
+        - CMD_LDAP_BINDCREDENTIALS=${HEDGEDOC_LDAP_BINDCREDENTIALS}
+        - CMD_LDAP_SEARCHBASE=${HEDGEDOC_LDAP_SEARCHBASE}
+        - CMD_LDAP_SEARCHFILTER=${HEDGEDOC_LDAP_SEARCHFILTER:-(&(objectcategory=person)(objectclass=user)(|(sAMAccountName={{username}})(mail={{username}})))}
+        - CMD_LDAP_USERIDFIELD=${HEDGEDOC_LDAP_USERIDFIELD:-sAMAccountName}
+        - CMD_LDAP_PROVIDERNAME=${HEDGEDOC_LDAP_PROVIDERNAME:-"Local AD"}
+        - DEBUG=${HEDGEDOC_DEBUG:-false}
+        - NODE_ENV=production
+        - CMD_ALLOW_EMAIL_REGISTER=true
+        - CMD_EMAIL=true
+        - CMD_ALLOW_ANONYMOUS=false
+        - CMD_ALLOW_GRAVATAR=false
+        - CMD_DOMAIN=doc.${FQDN}
+        - CMD_PROTOCOL_USESSL=true
+        - CMD_ALLOW_ORIGIN=doc.${FQDN}
+        - CMD_COOKIE_POLICY=strict
+        - CMD_REQUIRE_FREEURL_AUTHENTICATION=true
+        - CMD_DEFAULT_PERMISSION=private
+        healthcheck:
+            # details about the health checks: https://docs.docker.com/compose/compose-file/#healthcheck
+            test: wget -nv -t1 --spider 'http://localhost:3000/'
+            interval: 1m            # how often a health check is done
+            timeout: 10s
+            retries: 3
+        networks: 
+            traefik_internal:
+            backend:
+        labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hedgedoc.rule=Host(`doc.${FQDN}`)"
+        - "traefik.http.services.hedgedoc.loadbalancer.server.port=3000"
+        - "traefik.http.routers.hedgedoc.entrypoints=https"
