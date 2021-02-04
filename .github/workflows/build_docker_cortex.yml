@@ -6,7 +6,7 @@ on:
 env:
   MY_DOCKER_CONTEXT: ./.docker/cortex
   MY_DOCKER_DOCKERFILE: Dockerfile
-  DOCKERHUB_ORG: ${{ secrets.DOCKERHUB_ORG }}
+  DOCKERHUB_ORG: ${{ secrets.DOCKERHUB_ORG }}/cortex
 jobs:
   latest:
     strategy:
@@ -16,7 +16,7 @@ jobs:
           # includes a new variable of npm with a value of 2
           # for the matrix leg matching the os and version
           - REGISTRY: hub.docker.com
-            MY_DOCKER_REPO: ${{ env.DOCKERHUB_ORG }}/cortex
+            MY_DOCKER_REPO: ${{ env.DOCKERHUB_ORG }}
             REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
             REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           - REGISTRY: quay.io
