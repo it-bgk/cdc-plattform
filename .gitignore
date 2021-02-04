@@ -2,6 +2,7 @@
 watcher/watcher
 opencti/opencti
 hedgedoc/hedgedoc
+n8n/n8n
 /BACKUP/**
 /DATA/*
 !/DATA/ssl

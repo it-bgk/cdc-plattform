@@ -1,0 +1,57 @@
+version: '3'
+networks:
+    traefik_internal:
+        external: true
+    n8n:
+        internal: true
+
+volumes: 
+    data:
+    database:
+
+services:
+    database:
+        image: postgres:alpine
+        restart: unless-stopped
+        environment:
+        - POSTGRES_USER=n8n
+        - POSTGRES_PASSWORD=password
+        - POSTGRES_DB=n8n
+        volumes:
+        - database:/var/lib/postgresql/data
+        networks: 
+            n8n:
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U n8n"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+    n8n:
+        image: n8nio/n8n
+        restart: unless-stopped
+        command: /bin/sh -c "sleep 5; n8n start"
+        environment:     
+        - DB_TYPE=postgresdb
+        - DB_POSTGRESDB_DATABASE=n8n
+        - DB_POSTGRESDB_HOST=database
+        - DB_POSTGRESDB_PORT=5432
+        - DB_POSTGRESDB_USER=n8n
+        - DB_POSTGRESDB_PASSWORD=password
+        # Basic Auth will be done via Traefik
+        #- N8N_BASIC_AUTH_ACTIVE=false
+        #- N8N_BASIC_AUTH_USER=test
+        #- N8N_BASIC_AUTH_PASSWORD=test
+        volumes: 
+        - data:/home/node/.n8n
+        networks: 
+            traefik_internal:
+            n8n:
+        labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.n8n.rule=Host(`n8n.${FQDN}`)"
+        - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+        - "traefik.http.routers.n8n.entrypoints=https"
+        - "traefik.http.routers.n8n.middlewares=n8n@docker"
+        - "traefik.http.middlewares.n8n.basicauth.users=${N8N_BASIC_AUTH_USER}"
+        - "traefik.http.middlewares.n8n.basicauth.removeheader=true"
+        - "traefik.http.middlewares.n8n.basicauth.realm=Traefik Basic Auth for N8N"
