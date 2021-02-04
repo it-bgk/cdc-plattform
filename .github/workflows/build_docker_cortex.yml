@@ -6,14 +6,14 @@ on:
 env:
   MY_DOCKER_CONTEXT: ./.docker/cortex
   MY_DOCKER_DOCKERFILE: Dockerfile
-  REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 strategy:
       matrix:
-        MY_DOCKER_REPO: [${{ secrets.DOCKERHUB_ORG }}/cortex,${{ secrets.QUAY_ORG }}/cortex]
         include:
           # includes a new variable of npm with a value of 2
           # for the matrix leg matching the os and version
+          - MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/cortex
+            REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+            REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           - MY_DOCKER_REPO: ${{ secrets.QUAY_ORG }}/cortex
             REGISTRY_USERNAME: ${{ secrets.QUAY_USERNAME }}
             REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
