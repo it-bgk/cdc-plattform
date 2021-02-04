@@ -45,6 +45,8 @@ This project thanks all contributors of the projects listed below, without them 
   - [Watcher](https://github.com/Felix83000/Watcher)
 - Threat Intelligence Processing
   - [MineMeld](https://github.com/PaloAltoNetworks/minemeld/wiki)
+- Workflow
+  - [n8n](https://n8n.io/integrations)
 - Sidekicks
   - [Traefik](https://docs.traefik.io/)
   - [Redis](https://hub.docker.com/_/redis)
