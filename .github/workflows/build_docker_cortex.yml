@@ -4,23 +4,24 @@ on:
     - cron:  '0 0 * * *'
   workflow_dispatch:
 env:
-  MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/cortex
   MY_DOCKER_CONTEXT: ./.docker/cortex
   MY_DOCKER_DOCKERFILE: Dockerfile
-  registry_username: ${{ secrets.DOCKER_USERNAME }}
-  registry_password: ${{ secrets.DOCKER_PASSWORD }}
+  REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+strategy:
+      matrix:
+        MY_DOCKER_REPO: [${{ secrets.DOCKERHUB_ORG }}/cortex,${{ secrets.QUAY_ORG }}/cortex]
+        include:
+          # includes a new variable of npm with a value of 2
+          # for the matrix leg matching the os and version
+          - MY_DOCKER_REPO: ${{ secrets.QUAY_ORG }}/cortex
+            REGISTRY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+            REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
 jobs:
   latest:
     strategy:
       matrix:
         VERSION: [3.1.0]
-        MY_DOCKER_REPO: [${{ secrets.DOCKERHUB_ORG }}/cortex,${{ secrets.QUAY_ORG }}/cortex]
-        include:
-        # includes a new variable of npm with a value of 2
-        # for the matrix leg matching the os and version
-        - MY_DOCKER_REPO: ${{ secrets.QUAY_ORG }}/cortex
-          REGISTRY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
