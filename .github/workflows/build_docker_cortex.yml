@@ -4,25 +4,14 @@ on:
     - cron:  '0 0 * * *'
   workflow_dispatch:
 env:
+  MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/cortex
   MY_DOCKER_CONTEXT: ./.docker/cortex
   MY_DOCKER_DOCKERFILE: Dockerfile
-  DOCKERHUB_ORG: ${{ secrets.DOCKERHUB_ORG }}/cortex
 jobs:
   latest:
     strategy:
       matrix:
         VERSION: [3.1.0]
-        include:
-          # includes a new variable of npm with a value of 2
-          # for the matrix leg matching the os and version
-          - REGISTRY: hub.docker.com
-            MY_DOCKER_REPO: ${{ env.DOCKERHUB_ORG }}
-            REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-            REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          - REGISTRY: quay.io
-            MY_DOCKER_REPO: ${{ secrets.QUAY_ORG }}/cortex
-            REGISTRY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-            REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,33 +21,34 @@ jobs:
       - name: Kaniko build
         uses: aevea/action-kaniko@master
         with:
-          image: ${{matrix.MY_DOCKER_REPO}}
-          username: ${{ matrix.REGISTRY_USERNAME }}
-          password: ${{ matrix.REGISTRY_PASSWORD }}
+          image: ${{env.MY_DOCKER_REPO}}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           tag: ${{ env.EXT_GIT_REF_SHA1 }}
           extra_args: |
             --digest-file=/dev/termination-log 
             --reproducible 
-            --destination ${{matrix.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
+            --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
             --build-arg VERSION=${{ matrix.VERSION }}-1
           path: ${{ env.MY_DOCKER_CONTEXT }}
           build_file: ${{ env.MY_DOCKER_DOCKERFILE }}
           tag_with_latest: true
           cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
+      - name: push README to Dockerhub
+        uses: christian-korneck/update-container-description-action@v1
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          destination_container_repo: ${{env.MY_DOCKER_REPO}}
+          provider: dockerhub
+          short_description: 'TheHive Cortex (v.${{ matrix.VERSION }}) Daily Docker Container base on Debian'
+          readme_file: 'README.md'
   other:
     strategy:
       matrix:
         VERSION: [3.0.0]
-        include:
-          # includes a new variable of npm with a value of 2
-          # for the matrix leg matching the os and version
-          - MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/cortex
-            REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-            REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          - MY_DOCKER_REPO: ${{ secrets.QUAY_ORG }}/cortex
-            REGISTRY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-            REGISTRY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
@@ -70,8 +60,8 @@ jobs:
         uses: aevea/action-kaniko@master
         with:
           image: ${{env.MY_DOCKER_REPO}}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
           tag: ${{ env.EXT_GIT_REF_SHA1 }}
           extra_args: --digest-file=/dev/termination-log --reproducible --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} --build-arg VERSION=${{ matrix.VERSION }}-1
           path: ${{ env.MY_DOCKER_CONTEXT }}
