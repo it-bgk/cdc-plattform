@@ -35,16 +35,16 @@ jobs:
           tag_with_latest: true
           cache: true
           cache_registry: ${{ secrets.DOCKERHUB_ORG }}/cache
-      - name: push README to Dockerhub
-        uses: christian-korneck/update-container-description-action@v1
-        env:
-          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
-        with:
-          destination_container_repo: ${{env.MY_DOCKER_REPO}}
-          provider: dockerhub
-          short_description: 'TheHive Cortex (v.${{ matrix.VERSION }}) Daily Docker Container base on Debian'
-          readme_file: 'README.md'
+      #- name: push README to Dockerhub
+      #  uses: christian-korneck/update-container-description-action@v1
+      #  env:
+      #    DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+      #    DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
+      #  with:
+      #    destination_container_repo: ${{env.MY_DOCKER_REPO}}
+      #    provider: dockerhub
+      #    short_description: 'TheHive Cortex (v.${{ matrix.VERSION }}) Daily Docker Container base on Debian'
+      #    readme_file: 'README.md'
   other:
     strategy:
       matrix:
