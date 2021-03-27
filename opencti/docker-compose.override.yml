@@ -25,8 +25,9 @@ services:
         # - PROVIDERS__LDAP__CONFIG__ALLOW_SELF_SIGNED=true
         # - PROVIDERS__LOCAL__STRATEGY=LocalStrategy
         #- APP__LOGS_LEVEL=debug
-        volumes:
-            - ${SSL_ROOT_CA}:/etc/ssl/certs/custom-root-ca.crt:ro
+        # volumes:
+            # If SSL Inspection is required, but keep in mind you must verify that also on all other container...:
+            #- ${SSL_ROOT_CA}:/etc/ssl/certs/custom-root-ca.crt:ro
         networks: 
             traefik_internal:
             default:
@@ -37,12 +38,13 @@ services:
             - "traefik.http.routers.opencti.rule=Host(`opencti.${FQDN}`)"
             - "traefik.http.routers.opencti.entrypoints=https"
             - "traefik.http.services.opencti.loadbalancer.server.port=8080"
+            - "traefik.http.routers.opencti.middlewares=internal-ip"
     minio:
         ports:
             - 127.0.0.1:50001:9000
     connector-cyber-threat-coalition:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/cyber-threat-coalition/docker-compose.yml
-        image: opencti/connector-cyber-threat-coalition:4.1.1
+        image: opencti/connector-cyber-threat-coalition:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -60,7 +62,7 @@ services:
         restart: always
     connector-cve:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/cve/docker-compose.yml
-        image: opencti/connector-cve:4.1.1
+        image: opencti/connector-cve:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -78,7 +80,7 @@ services:
         restart: always
     connector-alienvault:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/alienvault/docker-compose.yml
-        image: opencti/connector-alienvault:4.1.1
+        image: opencti/connector-alienvault:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -103,7 +105,7 @@ services:
         - ALIENVAULT_INTERVAL_SEC=1800
         restart: always
     connector-cybercrimetracker:
-        image: opencti/connector-cybercrime-tracker:4.1.1
+        image: opencti/connector-cybercrime-tracker:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -122,7 +124,7 @@ services:
         restart: always
     connector-malpedia:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/malpedia/docker-compose.yml
-        image: opencti/connector-malpedia:4.1.1
+        image: opencti/connector-malpedia:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -142,7 +144,7 @@ services:
         restart: always
     connector-hygiene:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/hygiene/docker-compose.yml
-        image: opencti/connector-hygiene:4.1.1
+        image: opencti/connector-hygiene:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
@@ -156,7 +158,7 @@ services:
         restart: always
     connector-misp:
         # https://www.notion.so/Connectors-4586c588462d4a1fb5e661f2d9837db8
-        image: opencti/connector-misp:latest
+        image: opencti/connector-misp:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}

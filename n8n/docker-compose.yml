@@ -55,3 +55,4 @@ services:
         - "traefik.http.middlewares.n8n.basicauth.users=${N8N_BASIC_AUTH_USER}"
         - "traefik.http.middlewares.n8n.basicauth.removeheader=true"
         - "traefik.http.middlewares.n8n.basicauth.realm=Traefik Basic Auth for N8N"
+        - "traefik.http.routers.n8n.middlewares=internal-ip"
