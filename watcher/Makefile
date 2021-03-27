@@ -18,7 +18,6 @@ update:
 	cd ${FOLDER}; git pull
 	${MAKE} start
 start:
-	cd ..; docker-compose up -d traefik
 	cd ${FOLDER}; docker-compose up -d
 	${MAKE} logs
 stop:

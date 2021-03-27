@@ -1,7 +1,7 @@
 name: Build MISP Docker Container
 on: 
-  schedule:
-    - cron:  '0 0 * * *'
+  # schedule:
+  #   - cron:  '0 0 * * *'
   workflow_dispatch:
 env:
   MY_DOCKER_REPO: ${{ secrets.DOCKERHUB_ORG }}/misp

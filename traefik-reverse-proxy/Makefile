@@ -1,8 +1,6 @@
-FOLDER:=opencti
+FOLDER:=.
 install:
-	git clone https://github.com/OpenCTI-Platform/docker.git ${FOLDER}
 	ln -s $${PWD}/../.env ${FOLDER}/.env
-	ln -s $${PWD}/docker-compose.override.yml ${FOLDER}/
 #
 clean:
 	${MAKE} stop

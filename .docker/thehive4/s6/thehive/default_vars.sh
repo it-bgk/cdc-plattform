@@ -3,6 +3,7 @@ DEBUG=${DEBUG:-"0"}
 [ "$DEBUG" -eq 0 ] || set -x
 
 CASSANDRA_DB_HOSTNAME=${CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
+ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-"elasticsearch"}
 CONFIG_FILE=${CONFIG_FILE:-"/etc/thehive/application.conf"}
 CONFIG=${CONFIG:-"1"}
 SECRET="${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}"

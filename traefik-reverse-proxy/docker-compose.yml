@@ -1,0 +1,107 @@
+version: '2.4'
+
+networks:
+    traefik_internal:
+        external: true
+    egress:
+        external: true
+
+services:
+    # https://containrrr.github.io/watchtower/  
+    watchtower:
+        image: containrrr/watchtower
+        container_name: watchtower
+        restart: unless-stopped
+        environment: 
+            - WATCHTOWER_CLEANUP=true
+            - WATCHTOWER_POLL_INTERVAL=300
+            - WATCHTOWER_MONITOR_ONLY=false
+            - WATCHTOWER_SCHEDULE=0 0 4 * * *
+            - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
+            #
+            - WATCHTOWER_NOTIFICATIONS=email
+                # in seconds:
+            - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+                # to skip cert verify
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
+            - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+            - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+        networks:
+            egress:
+        volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        runtime: runc
+        mem_limit: 512M
+    # https://docs.traefik.io/   
+    traefik:
+        image: traefik:2.4
+        restart: unless-stopped
+        container_name: traefik
+        volumes:
+            - acme_data:/etc/traefik/acme
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
+            - ${SSL_ROOT_CA}:/ssl/ca:ro
+            - ${SSL_CERT}:/ssl/cert:ro
+            - ${SSL_KEY}:/ssl/key:ro
+        environment: 
+            # Entrypoint HTTP
+            ## Enable entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTP=true
+            ## Set entrypoint to the following port
+            - TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS=:80
+            # Redirect traefik to https
+            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_TO=https
+            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
+            ## Set forwardheaders
+            - TRAEFIK_ENTRYPOINTS_HTTP_FORWARDEDHEADERS_INSECURE=true
+            #
+            # Entrypoint HTTPS
+            ## Enable entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTPS=true
+            ## Set entrypoint to the following port
+            - TRAEFIK_ENTRYPOINTS_HTTPS_ADDRESS=:443
+            ## Set forwardheaders
+            - TRAEFIK_ENTRYPOINTS_HTTPS_FORWARDEDHEADERS_INSECURE=true
+            ## Set TLS on this entrypoint
+            - TRAEFIK_ENTRYPOINTS_HTTPS_HTTP_TLS=true
+            # Dashboard
+            - TRAEFIK_API=true
+            - TRAEFIK_API_DASHBOARD=true
+            #
+            # Provider
+            #  Load dynamic configuration from a file.
+            - TRAEFIK_PROVIDERS_FILE_FILENAME=/traefik_dynamic.yml
+            ## Enable Docker provider
+            - TRAEFIK_PROVIDERS_DOCKER=true
+            ## Set docker provider endpoint
+            - TRAEFIK_PROVIDERS_DOCKER_ENDPOINT=unix:///var/run/docker.sock
+            ## Disable docker container default exposion
+            - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
+            ## Set docker network for watching container
+            - TRAEFIK_PROVIDERS_DOCKER_NETWORK=traefik_internal
+            # Logging
+            - TRAEFIK_LOG=true
+            - TRAEFIK_LOG_LEVEL=info
+            - TRAEFIK_ACCESSLOG=false
+            # Disable SSL certificate verification. (Default: false)
+            - TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY=true
+        networks:
+            egress:
+            traefik_internal:
+        ports:
+        - 80:80
+        - 443:443
+        mem_limit: 128M
+        labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik.rule=Host(`traefik.${FQDN}`)"
+        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.traefik.entrypoints=https"
+        - "traefik.http.routers.traefik.middlewares=auth,internal-ip"
+        - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
+        - "traefik.http.middlewares.internal-ip.ipwhitelist.sourcerange=10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"

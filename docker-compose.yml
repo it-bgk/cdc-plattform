@@ -44,103 +44,6 @@ networks:
             com.docker.network.bridge.name: docker-traefik0
 
 services:
-    # https://containrrr.github.io/watchtower/  
-    watchtower:
-        image: containrrr/watchtower
-        container_name: watchtower
-        restart: unless-stopped
-        environment: 
-            - WATCHTOWER_CLEANUP=true
-            - WATCHTOWER_POLL_INTERVAL=300
-            - WATCHTOWER_MONITOR_ONLY=false
-            - WATCHTOWER_SCHEDULE=0 0 4 * * *
-            - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
-            #
-            - WATCHTOWER_NOTIFICATIONS=email
-                # in seconds:
-            - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
-                # to skip cert verify
-            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=true
-            - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
-            - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
-            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
-            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
-            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
-            - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
-        networks:
-            egress:
-        volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-        runtime: runc
-        mem_limit: 512M
-    # https://docs.traefik.io/   
-    traefik:
-        image: traefik:2.4
-        restart: unless-stopped
-        container_name: traefik
-        volumes:
-            - acme_data:/etc/traefik/acme
-            - /var/run/docker.sock:/var/run/docker.sock:ro
-            - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
-            - ${SSL_ROOT_CA}:/ssl/ca:ro
-            - ${SSL_CERT}:/ssl/cert:ro
-            - ${SSL_KEY}:/ssl/key:ro
-        environment: 
-            # Entrypoint HTTP
-            ## Enable entrypoint
-            - TRAEFIK_ENTRYPOINTS_HTTP=true
-            ## Set entrypoint to the following port
-            - TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS=:80
-            # Redirect traefik to https
-            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_TO=https
-            - TRAEFIK_ENTRYPOINTS_HTTP_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME=https
-            ## Set forwardheaders
-            - TRAEFIK_ENTRYPOINTS_HTTP_FORWARDEDHEADERS_INSECURE=true
-            #
-            # Entrypoint HTTPS
-            ## Enable entrypoint
-            - TRAEFIK_ENTRYPOINTS_HTTPS=true
-            ## Set entrypoint to the following port
-            - TRAEFIK_ENTRYPOINTS_HTTPS_ADDRESS=:443
-            ## Set forwardheaders
-            - TRAEFIK_ENTRYPOINTS_HTTPS_FORWARDEDHEADERS_INSECURE=true
-            ## Set TLS on this entrypoint
-            - TRAEFIK_ENTRYPOINTS_HTTPS_HTTP_TLS=true
-            # Dashboard
-            - TRAEFIK_API=true
-            - TRAEFIK_API_DASHBOARD=true
-            #
-            # Provider
-            #  Load dynamic configuration from a file.
-            - TRAEFIK_PROVIDERS_FILE_FILENAME=/traefik_dynamic.yml
-            ## Enable Docker provider
-            - TRAEFIK_PROVIDERS_DOCKER=true
-            ## Set docker provider endpoint
-            - TRAEFIK_PROVIDERS_DOCKER_ENDPOINT=unix:///var/run/docker.sock
-            ## Disable docker container default exposion
-            - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
-            ## Set docker network for watching container
-            - TRAEFIK_PROVIDERS_DOCKER_NETWORK=traefik_internal
-            # Logging
-            - TRAEFIK_LOG=true
-            - TRAEFIK_LOG_LEVEL=info
-            - TRAEFIK_ACCESSLOG=false
-            # Disable SSL certificate verification. (Default: false)
-            - TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY=true
-        networks:
-            egress:
-            traefik_internal:
-        ports:
-        - 80:80
-        - 443:443
-        mem_limit: 1G
-        labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.traefik.rule=Host(`traefik.${FQDN}`)"
-        - "traefik.http.routers.traefik.service=api@internal"
-        - "traefik.http.routers.traefik.entrypoints=https"
-        - "traefik.http.routers.traefik.middlewares=auth"
-        - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_BASIC_AUTH_USER}"
     elasticsearch:
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
@@ -215,7 +118,6 @@ services:
             traefik_internal:
         depends_on:
         - elasticsearch
-        - traefik
         expose:
             - 9001
         mem_limit: 2G
@@ -224,6 +126,7 @@ services:
             - "traefik.http.routers.cortex.rule=Host(`cortex.${FQDN}`)"
             - "traefik.http.services.cortex.loadbalancer.server.port=9001"
             - "traefik.http.routers.cortex.entrypoints=https"
+            - "traefik.http.routers.cortex.middlewares=internal-ip"
     thehive:
         image: itbgk/thehive4:${TH_VERSION}
         build:
@@ -238,8 +141,8 @@ services:
         #volumes:
             #- ./DATA/thehive/application_4.conf:/etc/thehive/application.conf
         depends_on:
-        - traefik
         - cassandra
+        - elasticsearch
         environment: 
             # https://github.com/TheHive-Project/TheHiveDocs/blob/master/installation/install-guide.md#customize-the-docker-image
             - AUTH_AD_WINDOMAIN=${TH_AUTH_AD_WINDOMAIN}
@@ -266,6 +169,7 @@ services:
             - MISP_PUB_EXCLUDE_TAGS=${TH_MISP_PUB_EXCLUDE_TAGS}
             - MISP_PUB_WHITELIST_TAGS=${TH_MISP_PUB_WHITELIST_TAGS}
             - SECRET=${TH_SECRET}
+            - ELASTICSEARCH_HOSTS=${TH_ELASTICSEARCH_HOSTS}
         expose:
             - 9000
         mem_limit: 2G
@@ -274,6 +178,7 @@ services:
             - "traefik.http.routers.thehive.rule=Host(`case.${FQDN}`,`${FQDN}`,`thehive.${FQDN}`)"
             - "traefik.http.services.thehive.loadbalancer.server.port=9000"
             - "traefik.http.routers.thehive.entrypoints=https"
+            - "traefik.http.routers.thehive.middlewares=internal-ip"
     cassandra:
         image: cassandra:latest
         restart: unless-stopped
@@ -289,40 +194,6 @@ services:
             retries: 3
             start_period: 60s
         mem_limit: 2G
-    synapse:
-        image: itbgk/thehive-synapse
-        restart: unless-stopped
-        container_name: th-synapse
-        environment: 
-        - DEBUG=${TH_SYNAPSE_DEBUG:-False}
-        - TH_URL=${TH_SYNAPSE_TH_URL:-http://thehive:9000}
-        - TH_USER=${TH_SYNAPSE_TH_USER:-synapse@local}
-        - TH_API_KEY=${TH_SYNAPSE_TH_API_KEY}
-        - EWS_HOST=${TH_SYNAPSE_EWS_HOST}
-        - EWS_USERNAME=${TH_SYNAPSE_EWS_USERNAME}
-        - EWS_PASSWORD=${TH_SYNAPSE_EWS_PASSWORD}
-        - EWS_AUTH_TYPE=${TH_SYNAPSE_EWS_AUTH_TYPE:-NTLM}
-        - EWS_SMTP_ADDRESS=${TH_SYNAPSE_EWS_SMTP_ADDRESS}
-        - EWS_FOLDER_NAME=${TH_SYNAPSE_EWS_FOLDER_NAME}
-        networks: 
-            egress: # Internet Access is required
-            traefik_internal:
-        depends_on: 
-        - thehive
-        expose:
-        - 5000
-        mem_limit: 2G
-        healthcheck:
-            test: [ "CMD", "curl", "--fail", "http://127.0.0.1:5000/ews2case" ]
-            timeout: 30s
-            interval: 60s
-            retries: 3
-            start_period: 60s
-        labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.synapse.rule=Host(`synapse.${FQDN}`)"
-        - "traefik.http.services.synapse.loadbalancer.server.port=5000"
-        - "traefik.http.routers.synapse.entrypoints=https"
     # misp-internal:
     #     image: itbgk/misp:2.4.134
     #     restart: unless-stopped
@@ -353,7 +224,8 @@ services:
     #         - "traefik.enable=true"
     #         - "traefik.http.routers.thehive.rule=Host(`misp.${FQDN}`)"
     #         - "traefik.http.routers.thehive.entrypoints=http"
-    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"       
+    #         - "traefik.http.services.thehive.loadbalancer.server.port=80"  
+    #       - "traefik.http.routers.nginx-static-files.middlewares=internal-ip"     
     # misp-internal-db:
     #     container_name: misp-internal-db
     #     image: mariadb
@@ -398,6 +270,7 @@ services:
     #         - "traefik.http.routers.thehive.rule=Host(`mp.${FQDN}`)"
     #         - "traefik.http.routers.thehive.entrypoints=http"
     #         - "traefik.http.services.thehive.loadbalancer.server.port=80"
+    #          - "traefik.http.routers.nginx-static-files.middlewares=internal-ip"
     # misp-public-db:
     #     container_name: misp-public-db
     #     image: mariadb
@@ -450,14 +323,13 @@ services:
         networks:
             egress:
             traefik_internal:
-        depends_on: 
-        - traefik
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.minemeld.rule=Host(`minemeld.${FQDN}`)"
             - "traefik.http.services.minemeld.loadbalancer.server.port=443"
             - "traefik.http.services.minemeld.loadbalancer.server.scheme=https"
             - "traefik.http.routers.minemeld.entrypoints=https"
+            - "traefik.http.routers.minemeld.middlewares=internal-ip"
     ###
     nginx:
         image: nginx:stable-alpine
@@ -467,10 +339,9 @@ services:
         - ./DATA/nginx-static-files/:/usr/share/nginx/html/:ro
         networks: 
             traefik_internal:
-        depends_on: 
-        - traefik
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.nginx-static-files.rule=Host(`s.${FQDN}`)"
             - "traefik.http.services.nginx-static-files.loadbalancer.server.port=80"
+            - "traefik.http.routers.nginx-static-files.middlewares=internal-ip"
     ###

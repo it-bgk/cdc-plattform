@@ -1,4 +1,5 @@
 install-all:
+	${MAKE} install traefik-reverse-proxy
 	docker-compose pull
 	docker-compose up -d
 	${MAKE} install opencti
@@ -18,10 +19,6 @@ clean-%:
 ####
 update-repo:
 	./.helper/update.sh
-####
-# DEV only
-update-toc:
-	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc README.md --skip-headers 2 --replace
 ####
 init_es:
 	./.helper/backup.sh init elasticsearch
@@ -52,3 +49,12 @@ restore_cassandra:
 
 backup_minemeld:
 	./.helper/backup.sh backup minemeld
+
+####
+# DEV only
+update-toc:
+	docker run -v $(shell pwd)":/app" -w /app --rm -it sebdah/markdown-toc README.md --skip-headers 2 --replace
+build-docker-thehive:
+	docker-compose build thehive
+build-docker-cortex:
+	docker-compose build cortex
