@@ -5,24 +5,12 @@ volumes:
         name: es_data
     es_config:
         name: es_config
-    acme_data:
-        name: acme_data
-    misp_redis:
-        name: misp_redis
     cassandra_data:
         name: cassandra_data
     minemeld_local:
         name: minemeld_local
     minemeld_logs:
         name: minemeld_logs
-    misp_internal_data:
-        name: misp_internal_data
-    misp_public_data:
-        name: misp_public_data
-    misp-internal-db_data:
-        name: misp-internal-db_data
-    misp-public-db_data:
-        name: misp-public-db_data
 
 networks:
     egress:

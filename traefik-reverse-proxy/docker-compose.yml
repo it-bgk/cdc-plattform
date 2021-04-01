@@ -6,6 +6,10 @@ networks:
     egress:
         external: true
 
+volumes:
+    acme_data:
+        name: acme_data
+
 services:
     # https://containrrr.github.io/watchtower/  
     watchtower:
