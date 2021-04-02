@@ -311,7 +311,7 @@ services:
         - AMITT_INTERVAL=7 # In days, must be strictly greater than 1
         restart: always
     connector-lastinfosec:
-        image: connector-lastinfosec:${OPENCTI_VERSION}
+        image: opencti/connector-lastinfosec:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
