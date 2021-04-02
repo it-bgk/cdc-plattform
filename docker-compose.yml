@@ -83,7 +83,7 @@ services:
             - /tmp/cortex-jobs:/tmp/cortex-jobs
         environment: 
             - SECRET=${CORTEX_SECRET}
-            - AUTH=${CORTEX_AUTH}
+            - AUTH=${CORTEX_AUTH:-local}
             - AUTH_AD_DOMAINFQDN=${CORTEX_AUTH_AD_DOMAINFQDN}
             - AUTH_AD_SERVERNAMES=${CORTEX_AUTH_AD_SERVERNAMES}
             - AUTH_AD_DOMAINNAME=${CORTEX_AUTH_AD_DOMAINNAME}
