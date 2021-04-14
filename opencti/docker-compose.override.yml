@@ -31,8 +31,6 @@ services:
         networks: 
             traefik_internal:
             default:
-        ports:
-            - 127.0.0.1:50000:8080
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.opencti.rule=Host(`opencti.${FQDN}`)"
