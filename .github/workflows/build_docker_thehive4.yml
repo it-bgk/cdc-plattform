@@ -29,7 +29,7 @@ jobs:
             --digest-file=/dev/termination-log 
             --reproducible 
             --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
-            --build-arg VERSION=${{ matrix.VERSION }}-1
+            --build-arg VERSION=${{ matrix.VERSION }}
           path: ${{ env.MY_DOCKER_CONTEXT }}
           build_file: ${{ env.MY_DOCKER_DOCKERFILE }}
           tag_with_latest: true
@@ -57,7 +57,7 @@ jobs:
             --digest-file=/dev/termination-log 
             --reproducible 
             --destination ${{env.MY_DOCKER_REPO}}:${{ matrix.VERSION }} 
-            --build-arg VERSION=${{ matrix.VERSION }}-1
+            --build-arg VERSION=${{ matrix.VERSION }}
           path: ${{ env.MY_DOCKER_CONTEXT }}
           build_file: ${{ env.MY_DOCKER_DOCKERFILE }}
           tag_with_latest: false
