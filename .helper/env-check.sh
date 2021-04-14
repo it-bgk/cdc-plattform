@@ -7,13 +7,11 @@ echo "Start $0"
 echo ""
 
 [ "$1" = "--enable-debug" ] && DEBUG=True && echo "Activate Debug Mode." && echo ""
-( [ "$1" = "--display-all" ] || [ "$2" = "--display-all" ] ) && DISPLAY_ALL=True && echo "Disable diff mode and show all"
+{ [ "$1" = "--display-all" ] || [ "$2" = "--display-all" ] } && DISPLAY_ALL=True && echo "Disable diff mode and show all"
 
 FILE_ENV="$PWD/.env"
 FILE_ENV_SAMPLE="$PWD/.env.sample"
-
-ENV_SAMPLE=$(cat $FILE_ENV_SAMPLE)
-ENV=$(cat $FILE_ENV)
+ENV="$(cat $FILE_ENV)"
 
 while IFS= read -r line; 
 do
@@ -47,8 +45,8 @@ do
             #
             #   This section is for commented variables
             #
-            NAME="$(echo $line| cut -d = -f 1)"
-            VALUE="$(echo $line| cut -d = -f 2)"
+            NAME="$(echo "$line"| cut -d = -f 1)"
+            VALUE="$(echo "$line"| cut -d = -f 2)"
             COMMENTED_OUT_VAR=""
 
             # Check if env var is set:
@@ -63,7 +61,7 @@ do
             fi
 
             # Check value of .env var:
-            VALUE_SET="$(echo $GREP_VAR_FROM_ENV|cut -d = -f 2)"
+            VALUE_SET="$(echo "$GREP_VAR_FROM_ENV"|cut -d = -f 2)"
 
             if [ -z "$GREP_VAR_FROM_ENV" ] 
             then
@@ -94,12 +92,12 @@ do
             ;;
         *)         
             ## Divide variable
-            NAME="$(echo $line| cut -d = -f 1)"
-            VALUE="$(echo $line| cut -d = -f 2)"
+            NAME="$(echo "$line"| cut -d = -f 1)"
+            VALUE="$(echo "$line"| cut -d = -f 2)"
             
             # Check if env var is set in .env:
             GREP_VAR_FROM_ENV="$(grep "^$NAME" "$FILE_ENV")"
-            VALUE_SET="$(echo $GREP_VAR_FROM_ENV|cut -d = -f 2)"
+            VALUE_SET="$(echo "$GREP_VAR_FROM_ENV"|cut -d = -f 2)"
 
             if [ -z "$GREP_VAR_FROM_ENV" ] 
             then
