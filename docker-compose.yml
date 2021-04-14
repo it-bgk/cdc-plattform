@@ -30,8 +30,48 @@ networks:
                 - subnet: "${INTERNAL_IP_SUBNET}.0/27"
         driver_opts:
             com.docker.network.bridge.name: docker-traefik0
-
+    docker_proxy_internal:
+        name: docker_proxy_internal
+        internal: true
+        ipam:
+            driver: default
+            config:
+                - subnet: "${DOCKER_PROXY_IP_SUBNET:-192.168.240}.0/24"
+        driver_opts:
+            com.docker.network.bridge.name: docker-proxy0
+            
 services:
+    docker-socket-proxy:
+        image: tecnativa/docker-socket-proxy
+        restart: unless-stopped
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+        environment:
+          - CONTAINERS=10
+          - INFO=1
+        networks:
+          docker_proxy_internal:
+            ipv4_address: "${DOCKER_PROXY_IP_SUBNET:-192.168.240}.2"
+        runtime: runc
+        mem_limit: 32M
+    filebeat:
+        image: quay.io/itbgk/filebeat:7.12.0-file
+        container_name: central-filebeat
+        hostname: ${FQDN:-${HOSTNAME}}
+        restart: unless-stopped
+        networks:
+          docker_proxy_internal:
+            ipv4_address: "${DOCKER_PROXY_IP_SUBNET:-192.168.240}.3"
+          default:
+        volumes:
+        - /var/lib/docker/containers/:/var/lib/docker/containers:ro
+        - /var/log:/var/log:ro
+        - /var/log/filebeat:/var/log/filebeat
+        extra_hosts: 
+          - "docker-socket-proxy:${DOCKER_PROXY_IP_SUBNET:-192.168.240}.2"
+        mem_limit: 64M
+        group_add:
+        - adm
     elasticsearch:
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
@@ -93,7 +133,7 @@ services:
             - AUTH_LDAP_BASE_DN=${CORTEX_AUTH_LDAP_BASE_DN}
             - AUTH_LDAP_FILTER=${CORTEX_AUTH_LDAP_FILTER}
             - ES_HOSTNAME=${CORTEX_ES_HOSTNAME}
-            - ES_URI=${CORTEX_ES_URL}
+            - ES_URI=${CORTEX_ES_URL:-http://elasticsearch:9200}
             - ES_AUTH_USER=${CORTEX_ES_AUTH_USER}
             - ES_AUTH_PW=${CORTEX_ES_AUTH_PW}
             - CONFIG_FILE=${CORTEX_CONFIG_FILE}
@@ -159,7 +199,7 @@ services:
             - MISP_PUB_EXCLUDE_TAGS=${TH_MISP_PUB_EXCLUDE_TAGS}
             - MISP_PUB_WHITELIST_TAGS=${TH_MISP_PUB_WHITELIST_TAGS}
             - SECRET=${TH_SECRET}
-            - ELASTICSEARCH_HOSTS=${TH_ELASTICSEARCH_HOSTS}
+            - ELASTICSEARCH_HOSTS=${TH_ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
         expose:
             - 9000
         mem_limit: 2G
