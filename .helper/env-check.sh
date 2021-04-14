@@ -7,11 +7,12 @@ echo "Start $0"
 echo ""
 
 [ "$1" = "--enable-debug" ] && DEBUG=True && echo "Activate Debug Mode." && echo ""
-{ [ "$1" = "--display-all" ] || [ "$2" = "--display-all" ] } && DISPLAY_ALL=True && echo "Disable diff mode and show all"
+# shellcheck disable=SC2235
+( [ "$1" = "--display-all" ] || [ "$2" = "--display-all" ] ) && DISPLAY_ALL=True && echo "Disable diff mode and show all"
 
 FILE_ENV="$PWD/.env"
 FILE_ENV_SAMPLE="$PWD/.env.sample"
-ENV="$(cat $FILE_ENV)"
+ENV="$(cat "$FILE_ENV")"
 
 while IFS= read -r line; 
 do
