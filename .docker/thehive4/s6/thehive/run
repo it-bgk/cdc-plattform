@@ -4,7 +4,7 @@ source /default_vars.sh
 exec s6-setuidgid thehive \
 /opt/thehive/bin/thehive \
 	-Dconfig.file="$CONFIG_FILE" \
-	-Dlogger.file=/etc/thehive/logback.xml \
+	-Dlogger.file="$LOGGER_FILE" \
 	-Dpidfile.path=/dev/null \
 	"$@"
 	

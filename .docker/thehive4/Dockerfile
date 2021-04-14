@@ -24,7 +24,7 @@ ENV VERSION ${VERSION}
 RUN set -eu \
     ;apt-get update \
     ;apt-get install -y --no-install-recommends  \
-        thehive4=${VERSION} \
+        thehive4=${VERSION}-1 \
     ;apt-get autoremove -y \
     ;rm -Rf /var/lib/apt/lists/* \
     ;
