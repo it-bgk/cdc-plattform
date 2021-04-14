@@ -48,7 +48,7 @@ services:
         volumes:
             - acme_data:/etc/traefik/acme
             - /var/run/docker.sock:/var/run/docker.sock:ro
-            - ./DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
+            - ${BASE_FOLDER}/DATA/traefik/traefik_dynamic.yml:/traefik_dynamic.yml:ro
             - ${SSL_ROOT_CA}:/ssl/ca:ro
             - ${SSL_CERT}:/ssl/cert:ro
             - ${SSL_KEY}:/ssl/key:ro

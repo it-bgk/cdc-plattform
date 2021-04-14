@@ -5,7 +5,8 @@ DEBUG=${DEBUG:-"0"}
 CASSANDRA_DB_HOSTNAME=${CASSANDRA_DB_HOSTNAME:-"th-cassandra"}
 ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-"elasticsearch"}
 CONFIG_FILE=${CONFIG_FILE:-"/etc/thehive/application.conf"}
-CONFIG=${CONFIG:-"1"}
+LOGGER_FILE=${LOGGER_FILE:-"/etc/thehive/logback.xml"}
+CONFIG=${CONFIG:-"0"}
 SECRET="${SECRET:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)"}"
 
 CORTEX_URL=${CORTEX_URL}

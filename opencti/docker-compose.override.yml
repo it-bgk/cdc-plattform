@@ -31,24 +31,35 @@ services:
         networks: 
             traefik_internal:
             default:
-        ports:
-            - 127.0.0.1:50000:8080
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.opencti.rule=Host(`opencti.${FQDN}`)"
             - "traefik.http.routers.opencti.entrypoints=https"
             - "traefik.http.services.opencti.loadbalancer.server.port=8080"
             - "traefik.http.routers.opencti.middlewares=internal-ip"
-    minio:
-        ports:
-            - 127.0.0.1:50001:9000
+    connector-history:
+        environment: 
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_HISTORY_ID}
+    connector-export-file-stix:
+        environment: 
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_HISTORY_ID}
+    connector-export-file-csv:
+        environment: 
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_EXPORT_FILE_CSV_ID} # Valid UUIDv4
+    connector-import-file-stix:
+        environment: 
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_IMPORT_FILE_STIX_ID} # Valid UUIDv4
+    connector-import-file-pdf-observables:
+        environment: 
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_IMPORT_FILE_PDF_OBSERVABLES_ID} # Valid UUIDv4
+    ### Start of custom connectors ###
     connector-cyber-threat-coalition:
         # https://github.com/OpenCTI-Platform/connectors/blob/master/cyber-threat-coalition/docker-compose.yml
         image: opencti/connector-cyber-threat-coalition:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_CYBER_THREAT_COALITION_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_CYBER_THREAT_COALITION_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=CyberThreatCoalition
         - CONNECTOR_SCOPE=indicator,report,identity
@@ -66,7 +77,7 @@ services:
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_CVE_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_CVE_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=Common Vulnerabilities and Exposures
         - CONNECTOR_SCOPE=identity,vulnerability
@@ -84,7 +95,7 @@ services:
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_ALIENVAULT_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_ALIENVAULT_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=AlienVault
         - CONNECTOR_SCOPE=alienvault
@@ -109,7 +120,7 @@ services:
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_CYBERCRIMETRACKER_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_CYBERCRIMETRACKER_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=Cybercrime-Tracker
         - CONNECTOR_SCOPE=cybercrime-tracker
@@ -128,7 +139,7 @@ services:
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_MALPEDIA_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_MALPEDIA_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=Malpedia
         - CONNECTOR_SCOPE=malpedia
@@ -148,7 +159,7 @@ services:
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_HYGIENE_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_HYGIENE_ID}
         - CONNECTOR_TYPE=INTERNAL_ENRICHMENT
         - CONNECTOR_NAME=Hygiene
         - CONNECTOR_SCOPE=IPv4-Addr,IPv6-Addr,Domain-Name,StixFile,Artifact
@@ -156,13 +167,13 @@ services:
         - CONNECTOR_CONFIDENCE_LEVEL=3
         - CONNECTOR_LOG_LEVEL=info
         restart: always
-    connector-misp:
+    connector-misp-internal:
         # https://www.notion.so/Connectors-4586c588462d4a1fb5e661f2d9837db8
         image: opencti/connector-misp:${OPENCTI_VERSION}
         environment:
         - OPENCTI_URL=http://opencti:8080
         - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
-        - CONNECTOR_ID=${CONNECTOR_MISP_ID}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_MISP_INTERNAL_ID}
         - CONNECTOR_TYPE=EXTERNAL_IMPORT
         - CONNECTOR_NAME=MISP
         - CONNECTOR_SCOPE=misp
@@ -177,4 +188,152 @@ services:
         - MISP_IMPORT_FROM_DATE=2000-01-01 # Optional, import all event from this date
         - MISP_IMPORT_TAGS=opencti:import,type:osint # Optional, list of tags used for import events
         - MISP_INTERVAL=1 # Required, in minutes
+        restart: always
+    connector-misp-public:
+        # https://www.notion.so/Connectors-4586c588462d4a1fb5e661f2d9837db8
+        image: opencti/connector-misp:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_MISP_PUBLIC_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=MISP
+        - CONNECTOR_SCOPE=misp
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=false
+        - CONNECTOR_LOG_LEVEL=info
+        - MISP_URL=${OPENCTI_MISP_PUBLIC_URL:-http://misp-public} # Required
+        - MISP_KEY=${OPENCTI_MISP_PUBLIC_API_KEY} # Required
+        - MISP_SSL_VERIFY=False # Required
+        - MISP_CREATE_REPORTS=True # Required, create report for MISP event
+        - MISP_REPORT_CLASS=MISP event # Optional, report_class if creating report for event
+        - MISP_IMPORT_FROM_DATE=2000-01-01 # Optional, import all event from this date
+        - MISP_IMPORT_TAGS=opencti:import,type:osint # Optional, list of tags used for import events
+        - MISP_INTERVAL=1 # Required, in minutes
+        restart: always
+    connector-urlhaus:
+        # https://www.notion.so/Connectors-4586c588462d4a1fb5e661f2d9837db8
+        image: opencti/connector-urlhaus:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_URLHAUS_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=Abuse.ch URLhaus
+        - CONNECTOR_SCOPE=urlhaus
+        - CONNECTOR_CONFIDENCE_LEVEL=40
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - URLHAUS_CSV_URL=https://urlhaus.abuse.ch/downloads/csv_recent/
+        - URLHAUS_IMPORT_OFFLINE=true
+        - URLHAUS_CREATE_INDICATORS=true
+        - URLHAUS_INTERVAL=3 # In days, must be strictly greater than 1
+        restart: always
+    connector-virustotal:
+        image: opencti/connector-virustotal:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_VIRUSTOTAL_ID}
+        - CONNECTOR_TYPE=INTERNAL_ENRICHMENT
+        - CONNECTOR_NAME=VirusTotal
+        - CONNECTOR_SCOPE=StixFile,Artifact
+        - CONNECTOR_AUTO=true
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_LOG_LEVEL=info
+        - VIRUSTOTAL_TOKEN=${OPENCTI_VIRUSTOTAL_API_KEY} # Required
+        - VIRUSTOTAL_MAX_TLP=TLP:AMBER
+        restart: always
+    connector-thehive:
+        image: opencti/connector-thehive:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_THEHIVE_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=TheHive
+        - CONNECTOR_SCOPE=thehive
+        - CONNECTOR_CONFIDENCE_LEVEL=5
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - THEHIVE_URL=${OPENCTI_THEHIVE_URL:-http://thehive:9000}
+        - THEHIVE_API_KEY=${OPENCTI_THEHIVE_API_KEY} # Required
+        - THEHIVE_CHECK_SSL=false
+        - THEHIVE_ORGANIZATION_NAME=${OPENCTI_THEHIVE_ORG_NAME}
+        - THEHIVE_IMPORT_FROM_DATE=${OPENCTI_THEHIVE_IMPORT_FROM_DATE:-2021-01-01T00:00:00} # Optional
+        restart: always
+    connector-mitre:
+        image: opencti/connector-mitre:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_MITRE_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=MITRE ATT&CK
+        - CONNECTOR_SCOPE=identity,attack-pattern,course-of-action,intrusion-set,malware,tool,report,external-reference-as-report
+        - CONNECTOR_CONFIDENCE_LEVEL=15
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - MITRE_ENTERPRISE_FILE_URL=https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json
+        - MITRE_PRE_ATTACK_FILE_URL=https://raw.githubusercontent.com/mitre/cti/master/pre-attack/pre-attack.json
+        - MITRE_MOBILE_ATTACK_FILE_URL=https://raw.githubusercontent.com/mitre/cti/master/mobile-attack/mobile-attack.json
+        - MITRE_INTERVAL=7 # In days, must be strictly greater than 1
+        restart: always
+    connector-cryptolaemus:
+        image: opencti/connector-cryptolaemus:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_CRYPTOLAEMUS_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=Cryptolaemus
+        - CONNECTOR_SCOPE=cryptolaemus
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        restart: always
+    connector-amitt:
+        image: opencti/connector-amitt:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_AMITT_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=AM!TT
+        - CONNECTOR_SCOPE=identity,attack-pattern,course-of-action,intrusion-set,malware,tool,report
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - AMITT_FILE_URL=https://raw.githubusercontent.com/VVX7/cti/master/amitt-attack/amitt-attack.json
+        - PRE_AMITT_FILE_URL=https://raw.githubusercontent.com/VVX7/cti/master/amitt-pre-attack/amitt-pre-attack.json
+        - AMITT_INTERVAL=7 # In days, must be strictly greater than 1
+        restart: always
+    connector-lastinfosec:
+        image: opencti/connector-lastinfosec:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_LASTINFOSEC_ID}
+        - CONNECTOR_TYPE=EXTERNAL_IMPORT
+        - CONNECTOR_NAME=lastinfosec-CTI
+        - CONNECTOR_SCOPE=application/json
+        - CONNECTOR_CONFIDENCE_LEVEL=3
+        - CONNECTOR_UPDATE_EXISTING_DATA=true
+        - CONNECTOR_LOG_LEVEL=info
+        - CONFIG_LIS_URL_CTI=https://api.client.lastinfosec.com/v2/stix21/getlasthour?api_key=
+        - CONFIG_LIS_APIKEY_CTI=${OPENCTI_LASTINFOSEC_API_KEY}
+        restart: always
+    connector-malbeacon:
+        image: opencti/connector-malbeacon:${OPENCTI_VERSION}
+        environment:
+        - OPENCTI_URL=http://opencti:8080
+        - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+        - CONNECTOR_ID=${OPENCTI_CONNECTOR_MALBEACON_ID}
+        - CONNECTOR_TYPE=INTERNAL_ENRICHMENT
+        - CONNECTOR_NAME=Malbeacon
+        - CONNECTOR_AUTO=${OPENCTI_MALBEACON_AUTO:-false} # Enable/disable auto-enrichment of observables
+        - CONNECTOR_SCOPE=ipv4-addr,ipv6-addr,domain-name
+        - CONNECTOR_CONFIDENCE_LEVEL=30 # From 0 (Unknown) to 100 (Fully trusted)
+        - CONNECTOR_LOG_LEVEL=info
+        - MALBEACON_API_KEY=${OPENCTI_MALBEACON_API_KEY}
         restart: always

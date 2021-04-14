@@ -13,7 +13,7 @@ then
     groupmod -g "${GID}" "$USERNAME"
 fi
 
-chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /opt/thehive*
+chown -R "$USERNAME":"$USERNAME" "${DATA_PATH}" /opt/*
 chgrp "$USERNAME" "$CONFIG_FILE"
 chmod 640 "$CONFIG_FILE"
 
@@ -23,4 +23,9 @@ then
 	sed -i "s/hosts:.*/hosts: [${AUTH_AD_HOSTS}]/g" "$CONFIG_FILE"
     #sed -i "s/\${??AUTH_LDAP_HOSTS}/${?AUTH_LDAP_HOSTS}/g" "$CONFIG_FILE"
 
+fi
+
+if [ $DEBUG ]
+then
+    sed -i "s/name=\"org.thp\" level=\"INFO\"/name=\"org.thp\" level=\"DEBUG\"/" "$LOGGER_FILE"
 fi

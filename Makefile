@@ -20,6 +20,17 @@ clean-%:
 update-repo:
 	./.helper/update.sh
 ####
+check-env:
+	@.helper/env-check.sh
+	@echo
+env-check:
+	@${MAKE} check-env
+env-check-debug:
+	@.helper/env-check.sh --enable-debug
+	@echo
+env-check-all:
+	@.helper/env-check.sh --display-all
+####
 init_es:
 	./.helper/backup.sh init elasticsearch
 

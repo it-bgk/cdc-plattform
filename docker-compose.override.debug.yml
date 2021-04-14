@@ -1,0 +1,8 @@
+version: '2.4'
+services:
+  thehive:
+    image: itbgk/thehive4:${TH_VERSION}-debug
+    build:
+      context: .docker/thehive4-debug
+      args: 
+          VERSION: ${TH_VERSION}
