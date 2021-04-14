@@ -54,8 +54,9 @@ services:
             ipv4_address: "${DOCKER_PROXY_IP_SUBNET:-192.168.240}.2"
         runtime: runc
         mem_limit: 32M
+    ###
     filebeat:
-        image: quay.io/itbgk/filebeat:7.12.0-file
+        image: itbgk/filebeat:7.12.0-file
         container_name: central-filebeat
         hostname: ${FQDN:-${HOSTNAME}}
         restart: unless-stopped
@@ -72,6 +73,7 @@ services:
         mem_limit: 64M
         group_add:
         - adm
+    ###
     elasticsearch:
         image: itbgk/elasticsearch-oss:7.9.2
         restart: unless-stopped
