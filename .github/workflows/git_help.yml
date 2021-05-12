@@ -20,7 +20,7 @@ jobs:
           regex: "help|not work"
           flags: 'gi'
 
-      - uses: actions-ecosystem/action-add-labels@v1
+      - uses: actions-ecosystem/action-add-labels@v1.1.2
         if: ${{ steps.regex-match.outputs.match != '' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
