@@ -30,7 +30,7 @@ jobs:
 
             e.g.) `add(cli): enable --verbose flag`, `fix(api): avoid unexpected error in handler`
 
-      - uses: actions-ecosystem/action-add-labels@v1
+      - uses: actions-ecosystem/action-add-labels@v1.1.2
         if: ${{ steps.regex-match.outputs.match == '' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
